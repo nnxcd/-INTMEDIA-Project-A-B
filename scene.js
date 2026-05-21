@@ -47,7 +47,7 @@ var createScene = function () {
     
     //this is to change background color
     Secondscene.ambientColor = new BABYLON.Color3(0.55, 0.3, 0.3);
-    Secondscene.clearColor = new BABYLON.Color3(0.2, 0.2, 0.9);
+    Secondscene.clearColor = new BABYLON.Color3(0.15, 0.12, 0.95);
     //this is to add fog
     Secondscene.fogMode = BABYLON.Scene.FOGMODE_LINEAR;
     Secondscene.fogStart = 20.0;
