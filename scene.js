@@ -67,3 +67,6 @@ var createScene = function () {
 window.addEventListener("resize", function () {
     engine.resize();
 });
+
+// use GUI part later https://playground.babylonjs.com/#P3E9YP
+
