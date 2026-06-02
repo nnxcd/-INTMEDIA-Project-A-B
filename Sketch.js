@@ -13,6 +13,7 @@ const CONN_D  = 110;
 // ── STATE ────────────────────────────────────
 let appState = 'start';
 let chosen   = '';
+let draggedNode = null;
 
 // ── INTERACTIVE NODES ────────────────────────
 let iNodes = [];
@@ -25,6 +26,77 @@ let ring = [];
 let mergeT  = 0;
 let branchT = 0;
 let inBranch = false;
+
+// ─────────────────────────────────────────────
+class PhysicsNode {
+  constructor(id, x, y, label, pink = false, isParent = false) {
+    this.id       = id;
+    this.x        = x;
+    this.y        = y;
+    this.label    = label;
+    this.pink     = pink;
+    this.vx       = 0;
+    this.vy       = 0;
+    this.fx       = 0;
+    this.fy       = 0;
+    this.mass     = isParent ? 3 : 1;  // Parent node is heavier
+    this.alpha    = 255;
+    this.isDragged = false;
+    this.isParent = isParent;
+  }
+
+  applyForce(fx, fy) {
+    this.fx += fx;
+    this.fy += fy;
+  }
+
+  update() {
+    if (this.isDragged) return;
+
+    let ax = this.fx / this.mass;
+    let ay = this.fy / this.mass;
+
+    this.vx = (this.vx + ax) * 0.92;
+    this.vy = (this.vy + ay) * 0.92;
+
+    // Parent node stays more centered
+    if (this.isParent) {
+      this.vx *= 0.85;
+      this.vy *= 0.85;
+    }
+
+    this.x += this.vx;
+    this.y += this.vy;
+
+    this.fx = 0;
+    this.fy = 0;
+  }
+
+  draw(alpha = 1) {
+    let col    = this.pink ? C_PINK : C_WHITE;
+    let a      = this.alpha * alpha;
+    let isHov  = dist(mouseX, mouseY, this.x, this.y) < HALO_R;
+
+    if (isHov && !this.isDragged) {
+      noStroke();
+      fill(col[0], col[1], col[2], 30);
+      ellipse(this.x, this.y, HALO_R * 2.5);
+    }
+
+    noStroke();
+    fill(col[0], col[1], col[2], a);
+    ellipse(this.x, this.y, NODE_R * 2);
+
+    if (this.label) {
+      fill(col[0], col[1], col[2], a * 0.9);
+      textAlign(CENTER, TOP);
+      textSize(isHov ? 16 : 14);
+      textFont('sans-serif');
+      noStroke();
+      text(this.label, this.x, this.y + NODE_R + 10);
+    }
+  }
+}
 
 // ─────────────────────────────────────────────
 class RingParticle {
@@ -80,17 +152,64 @@ function cy() { return height * 0.44; }
 
 function hoveredNode() {
   for (let n of iNodes) {
-    if (dist(mouseX, mouseY, n.x, n.y) < HALO_R) return n;
+    if (n.isDragged !== undefined && dist(mouseX, mouseY, n.x, n.y) < HALO_R) return n;
   }
   return null;
+}
+
+function applyPhysics() {
+  let centerX = cx();
+  let centerY = cy();
+  let repulsionStrength = 0.3;
+  let attractionStrength = 0.008;
+
+  for (let i = 0; i < iNodes.length; i++) {
+    let n = iNodes[i];
+    
+    // Center attraction (slight gravity) - only for children
+    if (!n.isParent) {
+      let dx = centerX - n.x;
+      let dy = centerY - n.y;
+      let d = sqrt(dx*dx + dy*dy);
+      if (d > 0) {
+        n.applyForce((dx/d) * attractionStrength, (dy/d) * attractionStrength);
+      }
+    }
+
+    // Repulsion from other nodes
+    for (let j = i + 1; j < iNodes.length; j++) {
+      let other = iNodes[j];
+      let dx = n.x - other.x;
+      let dy = n.y - other.y;
+      let d = sqrt(dx*dx + dy*dy) + 0.1;
+      let minDist = 150;
+
+      if (d < minDist) {
+        let force = repulsionStrength * (minDist - d) / d;
+        n.applyForce((dx/d) * force, (dy/d) * force);
+        other.applyForce(-(dx/d) * force, -(dy/d) * force);
+      }
+    }
+  }
+
+  // Update all nodes
+  for (let n of iNodes) {
+    n.update();
+  }
 }
 
 // ─────────────────────────────────────────────
 //  LAYOUTS
 // ─────────────────────────────────────────────
 function layoutStart() {
-  iNodes = [{ id:'start', x:cx(), y:cy(), label:'Start', pink:false, alpha:0 }];
-  iEdges = [];
+  let gap = width * 0.22;
+  let oy  = cy();
+  iNodes = [
+    new PhysicsNode('enter',  cx(),       oy,                   'Enter a new chapter',    false, true),
+    new PhysicsNode('must',   cx()-gap,   oy + height*0.18,     'Do what you must do',    false, false),
+    new PhysicsNode('want',   cx()+gap,   oy + height*0.18,     'Do what you want to do', true,  false),
+  ];
+  iEdges = [[0,1],[0,2]];  // Only parent-child connections
 }
 
 function layoutBranch() {
@@ -159,40 +278,19 @@ function triggerMerge() {
 // ─────────────────────────────────────────────
 function drawIEdges(alpha) {
   iEdges.forEach(([i,j]) => {
-    let a  = iNodes[i];
-    let b  = iNodes[j];
-    let ea = min(a.alpha, b.alpha) * 0.4 * alpha;
-    stroke(255, 255, 255, ea);
-    strokeWeight(0.8);
+    let a = iNodes[i];
+    let b = iNodes[j];
+    let ea = 80 * alpha;  // Much more visible opacity
+    stroke(100, 150, 180, ea);  // Obsidian-like cyan/blue color
+    strokeWeight(1.2);
     line(a.x, a.y, b.x, b.y);
   });
 }
 
 function drawINodes(alpha) {
-  let hov = hoveredNode();
-  iNodes.forEach(n => {
-    let isHov = hov && hov.id === n.id;
-    let col   = n.pink ? C_PINK : C_WHITE;
-    let a     = n.alpha * alpha;
-
-    if (isHov) {
-      noStroke();
-      fill(col[0], col[1], col[2], 30);
-      ellipse(n.x, n.y, HALO_R * 2.5);
-    }
-    noStroke();
-    fill(col[0], col[1], col[2], a);
-    ellipse(n.x, n.y, NODE_R * 2);
-
-    if (n.label) {
-      fill(col[0], col[1], col[2], a * 0.9);
-      textAlign(CENTER, TOP);
-      textSize(isHov ? 16 : 14);
-      textFont('sans-serif');
-      noStroke();
-      text(n.label, n.x, n.y + NODE_R + 10);
-    }
-  });
+  for (let n of iNodes) {
+    n.draw(alpha);
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -206,9 +304,10 @@ function setup() {
 function draw() {
   background(BG[0], BG[1], BG[2]);
 
-  // fade in start dot
+  // ── START: Graph view with physics ──
   if (appState === 'start') {
-    iNodes[0].alpha = lerp(iNodes[0].alpha, 255, 0.04);
+    applyPhysics();
+    drawIEdges(1);
     drawINodes(1);
     cursor(hoveredNode() ? HAND : ARROW);
     return;
@@ -269,6 +368,17 @@ function draw() {
 //  INPUT
 // ─────────────────────────────────────────────
 function mousePressed() {
+  // In start state: dragging or clicking
+  if (appState === 'start') {
+    let n = hoveredNode();
+    if (n) {
+      draggedNode = n;
+      n.isDragged = true;
+    }
+    return;
+  }
+
+  // In other states: original behavior
   if (inBranch || appState === 'merging' || appState === 'ring') return;
   let n = hoveredNode();
   if (!n) return;
@@ -277,6 +387,28 @@ function mousePressed() {
   } else if ((n.id === 'must' || n.id === 'want') && appState === 'branch') {
     chosen = n.id;
     triggerMerge();
+  }
+}
+
+function mouseDragged() {
+  if (draggedNode) {
+    draggedNode.x = mouseX;
+    draggedNode.y = mouseY;
+  }
+}
+
+function mouseReleased() {
+  if (draggedNode) {
+    draggedNode.isDragged = false;
+    // Check if we clicked on a node (short drag) to trigger interaction
+    let n = hoveredNode();
+    if (n && n === draggedNode && dist(pmouseX, pmouseY, mouseX, mouseY) < 10) {
+      if ((n.id === 'must' || n.id === 'want') && appState === 'start') {
+        chosen = n.id;
+        triggerMerge();
+      }
+    }
+    draggedNode = null;
   }
 }
 
