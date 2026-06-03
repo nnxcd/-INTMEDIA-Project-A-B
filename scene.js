@@ -143,7 +143,7 @@ var createScene = function () {
         meshes[0].position = new BABYLON.Vector3(0, 0, 0);
 
         pcs = new BABYLON.PointsCloudSystem("pcs", 0.0001, scene);
-        const pointsPerMesh = Math.floor(150000 / Math.max(meshes.length, 1));
+        const pointsPerMesh = Math.floor(200000 / Math.max(meshes.length, 1));
 
         for (let i = 0; i < meshes.length; i++) {
             if (meshes[i].getTotalVertices() > 0) {
