@@ -23,6 +23,9 @@ let iEdges = [];
 // ── RING PARTICLES ───────────────────────────
 let ring = [];
 
+// ── BACKGROUND IMAGE ─────────────────────────
+let backgroundImg = null;
+
 // ── TIMERS ───────────────────────────────────
 let mergeT  = 0;
 let branchT = 0;
@@ -348,13 +351,22 @@ function drawINodes(alpha) {
 // ─────────────────────────────────────────────
 //  SETUP / DRAW
 // ─────────────────────────────────────────────
+function preload() {
+  backgroundImg = loadImage('Images/black-bg.png');
+}
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
   layoutStart();
 }
 
 function draw() {
-  background(BG[0], BG[1], BG[2]);
+  // Draw background image (scaled to fill canvas)
+  if (backgroundImg) {
+    image(backgroundImg, 0, 0, width, height);
+  } else {
+    background(BG[0], BG[1], BG[2]);
+  }
 
   // ── START: Graph view with physics ──
   if (appState === 'start') {
