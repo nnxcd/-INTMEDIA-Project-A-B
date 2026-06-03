@@ -1,9 +1,10 @@
 // ─────────────────────────────────────────────
 //  CHOOSE YOUR PATH  —  sketch.js
 //  start → branch → merging → ring
+// credits to https://openprocessing.org/@u583556/2860176 for particle flower inspiration.
 // ─────────────────────────────────────────────
 
-const BG      = [26, 46, 26];
+const BG      = [0, 0, 0];
 const C_WHITE = [255, 255, 255];
 const C_PINK  = [230, 100, 140];
 const NODE_R  = 10;
@@ -26,15 +27,21 @@ let ring = [];
 let mergeT  = 0;
 let branchT = 0;
 let inBranch = false;
+let showWant = false;
+let wantT = 0;
+let showCareers = false;
+let careersT = 0;
 
 // ─────────────────────────────────────────────
 class PhysicsNode {
-  constructor(id, x, y, label, pink = false, isParent = false) {
+  constructor(id, x, y, label, pink = false, isParent = false, rings = [], size = 1) {
     this.id       = id;
     this.x        = x;
     this.y        = y;
     this.label    = label;
     this.pink     = pink;
+    this.rings    = rings;  // Array of [color, radius] for concentric rings
+    this.size     = size;   // Size multiplier
     this.vx       = 0;
     this.vy       = 0;
     this.fx       = 0;
@@ -75,17 +82,28 @@ class PhysicsNode {
   draw(alpha = 1) {
     let col    = this.pink ? C_PINK : C_WHITE;
     let a      = this.alpha * alpha;
-    let isHov  = dist(mouseX, mouseY, this.x, this.y) < HALO_R;
+    let isHov  = dist(mouseX, mouseY, this.x, this.y) < HALO_R * this.size;
+
+    // Draw concentric rings if they exist
+    if (this.rings.length > 0) {
+      for (let i = this.rings.length - 1; i >= 0; i--) {
+        let ringColor = this.rings[i][0];
+        let ringRadius = this.rings[i][1];
+        noStroke();
+        fill(ringColor[0], ringColor[1], ringColor[2], 40 * alpha);
+        ellipse(this.x, this.y, ringRadius * 2);
+      }
+    }
 
     if (isHov && !this.isDragged) {
       noStroke();
       fill(col[0], col[1], col[2], 30);
-      ellipse(this.x, this.y, HALO_R * 2.5);
+      ellipse(this.x, this.y, HALO_R * 2.5 * this.size);
     }
 
     noStroke();
     fill(col[0], col[1], col[2], a);
-    ellipse(this.x, this.y, NODE_R * 2);
+    ellipse(this.x, this.y, NODE_R * 2 * this.size);
 
     if (this.label) {
       fill(col[0], col[1], col[2], a * 0.9);
@@ -93,7 +111,7 @@ class PhysicsNode {
       textSize(isHov ? 16 : 14);
       textFont('sans-serif');
       noStroke();
-      text(this.label, this.x, this.y + NODE_R + 10);
+      text(this.label, this.x, this.y + NODE_R * this.size + 10);
     }
   }
 }
@@ -162,9 +180,13 @@ function applyPhysics() {
   let centerY = cy();
   let repulsionStrength = 0.3;
   let attractionStrength = 0.008;
+  let springStrength = 0.15;  // Spring force between connected nodes
 
   for (let i = 0; i < iNodes.length; i++) {
     let n = iNodes[i];
+    
+    // Skip 'enter' node - keep it fixed at top
+    if (n.id === 'enter') continue;
     
     // Center attraction (slight gravity) - only for children
     if (!n.isParent) {
@@ -173,6 +195,21 @@ function applyPhysics() {
       let d = sqrt(dx*dx + dy*dy);
       if (d > 0) {
         n.applyForce((dx/d) * attractionStrength, (dy/d) * attractionStrength);
+      }
+    }
+
+    // Spring forces along edges (connect nodes)
+    for (let edge of iEdges) {
+      let a = iNodes[edge[0]];
+      let b = iNodes[edge[1]];
+      if (a && b) {
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        let d = sqrt(dx*dx + dy*dy) + 0.1;
+        let targetDist = 120;
+        let springForce = springStrength * (d - targetDist) / d;
+        a.applyForce((dx/d) * springForce, (dy/d) * springForce);
+        b.applyForce(-(dx/d) * springForce, -(dy/d) * springForce);
       }
     }
 
@@ -204,19 +241,34 @@ function applyPhysics() {
 function layoutStart() {
   let gap = width * 0.22;
   let oy  = cy();
+  let parentX = cx() + gap;
+  let parentY = oy + height * 0.33;
+  let careerRadius = width * 0.15;
+  let careerY = parentY + height * 0.18;
+  
   iNodes = [
-    new PhysicsNode('enter',  cx(),       oy,                   'Enter a new chapter',    false, true),
-    new PhysicsNode('must',   cx()-gap,   oy + height*0.18,     'Do what you must do',    false, false),
-    new PhysicsNode('want',   cx()+gap,   oy + height*0.18,     'Do what you want to do', true,  false),
+    new PhysicsNode('enter',  cx(),       oy,                           'Enter a new chapter',    false, true, [], 2),
+    new PhysicsNode('want',   cx()+gap,   oy + height*0.18,             'Do what you want to do', false, false, []),
+    new PhysicsNode('careers', parentX,   parentY,                      '',                       false, true, []),
+    new PhysicsNode('gardener', parentX - careerRadius, careerY,        'be a gardener',         false, false, [[[100, 180, 100], 28], [[50, 150, 50], 38]]),
+    new PhysicsNode('biologist', parentX - careerRadius*0.5, careerY + height*0.08, 'be a marine biologist', false, false, [[[100, 160, 200], 28], [[50, 120, 180], 38]]),
+    new PhysicsNode('chef', parentX + careerRadius, careerY,            'be a chef',             false, false, [[[220, 130, 80], 28], [[200, 80, 50], 38]]),
+    new PhysicsNode('artist', parentX - careerRadius*0.3, careerY + height*0.15, 'be an artist',     false, false, [[[180, 100, 180], 28], [[150, 50, 150], 38]]),
+    new PhysicsNode('actor', parentX + careerRadius*0.3, careerY + height*0.15, 'be an actor',       false, false, [[[230, 180, 60], 28], [[200, 150, 30], 38]]),
   ];
-  iEdges = [[0,1],[0,2]];  // Only parent-child connections
+  // Start with only enter node visible
+  iNodes[1].alpha = 0; // want node hidden
+  for (let i = 2; i < iNodes.length; i++) {
+    iNodes[i].alpha = 0; // careers and career nodes hidden
+  }
+  iEdges = [[0,1],[1,2],[2,3],[2,4],[2,5],[2,6],[2,7]];
 }
 
 function layoutBranch() {
   let gap = width * 0.22;
   let oy  = cy();
   iNodes = [
-    { id:'start', x:cx(),       y:oy - height*0.08, label:'',                       pink:false, alpha:255 },
+    { id:'start', x:cx(),       y:oy - height*0.08, label:'Enter a new chapter',                       pink:false, alpha:255 },
     { id:'must',  x:cx()-gap,   y:oy + height*0.12, label:'Do what you must do',    pink:false, alpha:0   },
     { id:'want',  x:cx()+gap,   y:oy + height*0.12, label:'Do what you want to do', pink:true,  alpha:0   },
   ];
@@ -306,6 +358,25 @@ function draw() {
 
   // ── START: Graph view with physics ──
   if (appState === 'start') {
+    // Animate want node fade-in
+    if (showWant) {
+      wantT += 0.04;
+      if (wantT >= 1) wantT = 1;
+      let ease = wantT < 0.5 ? 2*wantT*wantT : -1+(4-2*wantT)*wantT;
+      iNodes[1].alpha = ease * 255; // want node
+      iNodes[2].alpha = ease * 255; // careers node
+    }
+    
+    // Animate career nodes fade-in
+    if (showCareers) {
+      careersT += 0.04;
+      if (careersT >= 1) careersT = 1;
+      let ease = careersT < 0.5 ? 2*careersT*careersT : -1+(4-2*careersT)*careersT;
+      for (let i = 3; i < iNodes.length; i++) {
+        iNodes[i].alpha = ease * 255;
+      }
+    }
+    
     applyPhysics();
     drawIEdges(1);
     drawINodes(1);
@@ -353,7 +424,14 @@ function draw() {
     // label fades in near end
     if (mergeT > 0.75) {
       let la  = map(mergeT, 0.75, 1.0, 0, 200);
-      let lbl = chosen === 'must' ? 'Do what you must do' : 'Do what you want to do';
+      let careerLabels = {
+        'gardener': 'be a gardener',
+        'biologist': 'be a marine biologist',
+        'chef': 'be a chef',
+        'artist': 'be an artist',
+        'actor': 'be an actor'
+      };
+      let lbl = careerLabels[chosen] || 'Do what you want to do';
       noStroke();
       fill(255, 255, 255, la);
       textAlign(CENTER, TOP);
@@ -372,6 +450,24 @@ function mousePressed() {
   if (appState === 'start') {
     let n = hoveredNode();
     if (n) {
+      // Check if enter node clicked
+      if (n.id === 'enter' && !showWant) {
+        showWant = true;
+        wantT = 0;
+        return;
+      }
+      // Check if want node clicked
+      if (n.id === 'want' && !showCareers) {
+        showCareers = true;
+        careersT = 0;
+        return;
+      }
+      // Check if careers node clicked
+      if (n.id === 'careers' && !showCareers) {
+        showCareers = true;
+        careersT = 0;
+        return;
+      }
       draggedNode = n;
       n.isDragged = true;
     }
@@ -403,7 +499,7 @@ function mouseReleased() {
     // Check if we clicked on a node (short drag) to trigger interaction
     let n = hoveredNode();
     if (n && n === draggedNode && dist(pmouseX, pmouseY, mouseX, mouseY) < 10) {
-      if ((n.id === 'must' || n.id === 'want') && appState === 'start') {
+      if ((n.id === 'gardener' || n.id === 'biologist' || n.id === 'chef' || n.id === 'artist' || n.id === 'actor') && appState === 'start') {
         chosen = n.id;
         triggerMerge();
       }
