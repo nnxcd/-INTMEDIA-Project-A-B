@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fig tree</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; 
+            background-color: #fff;
+        }
+
+        /* The tree background layer */
+        .tree {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .tree img {
+            width: 100%;
+            height: 100%;
+            object-fit: fill; 
+            display: block;
+        }
+
+        /* The fruits container layer */
+        .fruits {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+
+        /* BASE STYLES: Keep them absolute and sized correctly at all times */
+        .fruits img {
+            width: 30%; /* Base size of your fig fruits */
+            height: auto;
+            position: absolute; 
+            transition: transform 0.2s ease; /* Smooth transitions */
+        }
+
+        /* HOVER EFFECTS: Trigger the shake animation safely */
+        .fruits img:hover {
+            cursor: pointer;
+            animation: shake 0.5s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        /* COORD CONFIGURATION FOR EACH FIG ID */
+        #fig1 {
+            top: 30%;
+            left: 45%;
+        }
+
+        #fig2 {
+            top: 25%;
+            left: 65%;
+        }
+
+        #fig3 {
+            top: 50%;
+            left: 30%;
+        }
+
+        #fig4 {
+            top: 40%;
+            left: 15%; /* Switched from right to left for easier layout consistency */
+        }
+
+        #fig5 {
+            top: 60%;  /* Added missing vertical alignment */
+            left: 55%; /* Fixed conflicting right/left settings */
+        }
+
+        #fig6 {
+            top: 10%;
+            left: 20%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tree">
+        <img src="Images/fig-tree.jpg" alt="fig tree">
+    </div>
+
+    <div class="fruits">
+        <img id="fig1" src="Images/fig-1.PNG" alt="fig fruit 1">
+        <img id="fig2" src="Images/fig-2.PNG" alt="fig fruit 2">
+        <img id="fig3" src="Images/fig-3.PNG" alt="fig fruit 3">
+        <img id="fig4" src="Images/fig-1.PNG" alt="fig fruit 4">
+        <img id="fig5" src="Images/fig-2.PNG" alt="fig fruit 5">
+        <img id="fig6" src="Images/fig-3.PNG" alt="fig fruit 6">
+    </div>
+
+</body>
+</html>
