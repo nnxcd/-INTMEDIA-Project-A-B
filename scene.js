@@ -19,7 +19,7 @@ var createScene = function () {
     camera.attachControl(canvas, true);
 
     scene.ambientColor = new BABYLON.Color3(0.55, 0.3, 0.3);
-    scene.clearColor   = new BABYLON.Color3(0.12, 0.12, 0.5);
+    scene.clearColor   = new BABYLON.Color3(0.01, 0.01, 0.01);
     scene.fogMode  = BABYLON.Scene.FOGMODE_LINEAR;
     scene.fogStart = 20.0;
     scene.fogEnd   = 60.0;
