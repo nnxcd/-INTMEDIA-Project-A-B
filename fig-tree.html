@@ -4,18 +4,14 @@
     <meta charset="UTF-8">
     <title>Fig tree</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-    <!-- Pinned to 0.12.2 — the version that uses ml5.handpose + .on("predict") -->
     <script src="https://unpkg.com/ml5@0.12.2/dist/ml5.min.js"></script>
     <style>
         html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
             overflow: hidden;
             background-color: #fff;
         }
-
         .tree {
             position: absolute;
             top: 0; left: 0;
@@ -27,7 +23,6 @@
             object-fit: fill;
             display: block;
         }
-
         .fruits {
             position: absolute;
             top: 0; left: 0;
@@ -47,7 +42,6 @@
         .fruits img.hand-shake {
             animation: shake 0.4s infinite;
         }
-
         @keyframes shake {
             0%   { transform: translate(1px, 1px)   rotate(0deg);  }
             10%  { transform: translate(-1px, -2px) rotate(-1deg); }
@@ -61,8 +55,6 @@
             90%  { transform: translate(1px, 2px)   rotate(0deg);  }
             100% { transform: translate(1px, -2px)  rotate(-1deg); }
         }
-
-        /* p5 overlay canvas — full screen, transparent, non-interactive */
         #p5-canvas-container {
             position: fixed;
             top: 0; left: 0;
@@ -76,7 +68,6 @@
             width: 100% !important;
             height: 100% !important;
         }
-
         #hand-status {
             position: fixed;
             bottom: 16px; right: 16px;
@@ -89,17 +80,12 @@
             border-radius: 20px;
             pointer-events: none;
         }
-
-        #fig1  { top: 30%; left: 45%; }
+        #fig1  { top: 30%; left: 35%; }
         #fig2  { top: 25%; left: 65%; }
-        #fig3  { top: 50%; left: 30%; }
-        #fig4  { top: 40%; left: 15%; }
+        #fig3  { bottom: 60%; left: 30%; }
+        #fig4  { top: 40%; left: 4%; }
         #fig5  { top: 60%; left: 55%; }
-        #fig6  { top: 10%; left: 20%; }
-        #fig7  { top: 10%; left: 50%; }
-        #fig8  { top: 10%; right: 20%; }
-        #fig9  { bottom: 70%; left: 20%; }
-        #fig10 { top: 10%; right: 45%; }
+       
     </style>
 </head>
 <body>
@@ -114,11 +100,7 @@
         <img id="fig3"  src="Images/fig-3.PNG" alt="fig fruit 3">
         <img id="fig4"  src="Images/fig-1.PNG" alt="fig fruit 4">
         <img id="fig5"  src="Images/fig-2.PNG" alt="fig fruit 5">
-        <img id="fig6"  src="Images/fig-3.PNG" alt="fig fruit 6">
-        <img id="fig7"  src="Images/fig-1.PNG" alt="fig fruit 7">
-        <img id="fig8"  src="Images/fig-2.PNG" alt="fig fruit 8">
-        <img id="fig9"  src="Images/fig-3.PNG" alt="fig fruit 9">
-        <img id="fig10" src="Images/fig-1.PNG" alt="fig fruit 10">
+       
     </div>
 
     <div id="p5-canvas-container"></div>
@@ -127,15 +109,22 @@
     <script>
     new p5(function(p) {
 
-        const VIDEO_W = 640;
-        const VIDEO_H = 480;
+        const VIDEO_W     = 640;
+        const VIDEO_H     = 480;
         const SHAKE_RADIUS = 140;
-        const TIP_INDICES = [4, 8, 12, 16, 20];
+        const TIP_INDICES  = [4, 8, 12, 16, 20];
+        // How much to shrink the detected hand region (0.5 = half size)
+        const HAND_SCALE  = 0.5;
 
         let handpose;
         let video;
         let predictions = [];
+        let handImg;
         const statusEl = document.getElementById('hand-status');
+
+        p.preload = function() {
+            handImg = p.loadImage('Images/hand.png');
+        };
 
         p.setup = function() {
             let cnv = p.createCanvas(window.innerWidth, window.innerHeight);
@@ -145,7 +134,6 @@
             video.size(VIDEO_W, VIDEO_H);
             video.hide();
 
-            // ── Official 0.12.2 pattern (from p5js.org tutorial) ──────────────
             handpose = ml5.handpose(video.elt, function() {
                 statusEl.textContent = '✋ Hand tracking ready — show your hand!';
             });
@@ -175,8 +163,7 @@
                 let pred = predictions[i];
                 if (!pred.landmarks) continue;
 
-                // landmarks[j] = [x, y, z] in VIDEO pixel space
-                // Scale to window size
+                // Scale landmarks from video space to screen space
                 let allPts = [];
                 for (let j = 0; j < pred.landmarks.length; j++) {
                     let lm = pred.landmarks[j];
@@ -186,63 +173,45 @@
                     });
                 }
 
-                // ── Debug dots ───────────────────────────────────────────────
-                p.noStroke();
-                p.fill(255, 60, 60, 210);
-                for (let j = 0; j < allPts.length; j++) {
-                    p.circle(allPts[j].x, allPts[j].y, 12);
-                }
-
-                // ── Bounding box ─────────────────────────────────────────────
+                // Full bounding box of all landmarks
                 let xs = allPts.map(function(pt) { return pt.x; });
                 let ys = allPts.map(function(pt) { return pt.y; });
                 let minX = Math.min.apply(null, xs);
                 let maxX = Math.max.apply(null, xs);
                 let minY = Math.min.apply(null, ys);
                 let maxY = Math.max.apply(null, ys);
-                let pad = 24;
-                let bx = minX - pad, by = minY - pad;
-                let bw = (maxX - minX) + pad * 2;
-                let bh = (maxY - minY) + pad * 2;
 
-                // Dashed white rectangle
-                p.noFill();
-                p.stroke(255, 255, 255, 200);
-                p.strokeWeight(2);
-                p.drawingContext.setLineDash([8, 5]);
-                p.rect(bx, by, bw, bh, 8);
-                p.drawingContext.setLineDash([]);
+                // Centre of the detected hand
+                let cx = (minX + maxX) / 2;
+                let cy = (minY + maxY) / 2;
 
-                // Green corner brackets
-                let cs = 22;
-                p.stroke(80, 230, 100, 255);
-                p.strokeWeight(3.5);
-                // top-left
-                p.line(bx, by+cs, bx, by);         p.line(bx, by, bx+cs, by);
-                // top-right
-                p.line(bx+bw-cs, by, bx+bw, by);   p.line(bx+bw, by, bx+bw, by+cs);
-                // bottom-left
-                p.line(bx, by+bh-cs, bx, by+bh);   p.line(bx, by+bh, bx+cs, by+bh);
-                // bottom-right
-                p.line(bx+bw-cs, by+bh, bx+bw, by+bh); p.line(bx+bw, by+bh, bx+bw, by+bh-cs);
+                // Half-size: shrink the bounding region by HAND_SCALE
+                let fullW = maxX - minX;
+                let fullH = maxY - minY;
+                let imgW = fullW * HAND_SCALE;
+                let imgH = fullH * HAND_SCALE;
 
-                // Collect fingertips
+                // Draw hand-pointing.jpg centred on the hand's centre
+                p.imageMode(p.CENTER);
+                p.image(handImg, cx, cy, imgW, imgH);
+
+                // Fingertips (still using full-scale coords for shake detection)
                 for (let k = 0; k < TIP_INDICES.length; k++) {
                     let idx = TIP_INDICES[k];
                     if (allPts[idx]) tips.push(allPts[idx]);
                 }
             }
 
-            // ── Shake figs near a fingertip ──────────────────────────────────
+            // Shake figs near any fingertip
             let figs = document.querySelectorAll('.fruits img');
             for (let f = 0; f < figs.length; f++) {
                 let rect = figs[f].getBoundingClientRect();
-                let cx = rect.left + rect.width  / 2;
-                let cy = rect.top  + rect.height / 2;
+                let fcx = rect.left + rect.width  / 2;
+                let fcy = rect.top  + rect.height / 2;
                 let near = false;
                 for (let t = 0; t < tips.length; t++) {
-                    let dx = tips[t].x - cx;
-                    let dy = tips[t].y - cy;
+                    let dx = tips[t].x - fcx;
+                    let dy = tips[t].y - fcy;
                     if (Math.sqrt(dx*dx + dy*dy) < SHAKE_RADIUS) { near = true; break; }
                 }
                 figs[f].classList.toggle('hand-shake', near);
