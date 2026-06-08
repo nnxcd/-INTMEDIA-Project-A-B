@@ -2,73 +2,137 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project A-B</title>
+    <title>Fig tree</title>
+
     <style>
-        body {
-            font-family:sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #000; /* Dark fallback while image loads */
-            overflow: hidden; /* Prevents unwanted scrollbars */
+        /* One block per font file */
+        @font-face {
+            font-family: 'mieszkanie9';
+            src: url('Fonts/mieszkanie9.otf');
         }
 
-        .main-content {
-            /* Force the container to fill the exact size of the browser window */
+        @font-face {
+            font-family: 'DeFonte';
+            font-weight: 600; /* DemiGras = semi-bold */
+            src: url('Fonts/DeFonte reduced DemiGras.ttf');
+        }
+
+        @font-face {
+            font-family: 'DeFonte';
+            font-weight: 700; /* Gros = heavy/bold */
+            src: url('Fonts/DeFonte reduced Gros.ttf');
+        }
+
+        @font-face {
+            font-family: 'DeFonte';
+            font-weight: 300; /* Leger = light */
+            src: url('Fonts/DeFonte reduced Leger.ttf');
+        }
+
+        @font-face {
+            font-family: 'DeFonte';
+            font-weight: 400; /* Normale = regular */
+            src: url('Fonts/DeFonte reduced Normale.ttf');
+        }
+
+        html, body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            font-family:Arial, Helvetica, sans-serif;
+        }
+
+        .background-image {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100vw;
             height: 100vh;
-            
-            /* Apply the background styling directly here 
-            background-image: url('Images/testing-bg.jpg');
-            background-repeat: no-repeat;
-            background-size: cover;
-            background-position: center; */
-            
-            /* Use Flexbox to flawlessly center all children elements */
+            z-index: -1;
+        }
+
+        .background-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: blur(2px);
+        }
+
+        .dvd-menu {
             display: flex;
+            flex-direction: column;
+            align-items: center;      /* keeps h1 centered */
             justify-content: center;
-            align-items: center;
-            z-index: 1; /* Ensure it stays above the canvas */
+            min-height: 80vh;
         }
 
-        .overlay-text {
-            padding:20px;
-            /* Text centering rules */
-            text-align: center;
-            color: rgb(0, 0, 0);
-            background-color: white;
-            z-index: 5;
+
+        .dvd-menu h1 {
+            font-family: 'Defonte';
+            font-weight: 600;
+            font-size: 40px;
+            margin-bottom: 40px;
+            color: white;
+            -webkit-text-stroke: 0.7px black;
+            text-shadow:  
+                1px 1px 2px rgb(255, 255, 255),
+                -1px -1px 1px rgb(255, 255, 255);
         }
 
-        /* Subtle button styling to make it stand out */
-        #start-btn {
-            padding: 10px 20px;
-            font-size: 1.1rem;
+        .dvd-menu-items h2 {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            font-family: 'DeFonte';
+            font-weight: 400;
+            margin: 10px 0;
+            text-align: left;
+            line-height: 1.5;
+            letter-spacing: -1px;
+            transform: scaleY(1.2);
+            padding-left: 40px; /* extra space to make room for the star */
+            position: relative;
             cursor: pointer;
-            margin-top: 15px;
         }
-        
-        canvas { 
-            width: 100%; 
-            height: 100vh; 
+
+/* star is hidden by default */
+        .dvd-menu-items h2::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 35px;  /* adjust to match your star image size */
+            height: 35px;
+            background-image: url('Images/menu-star.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0;
+        }
+
+        /* star appears on hover */
+        .dvd-menu-items h2:hover::before {
+            opacity: 1;
+        }
+
+        a{
+            color:black;
+            text-decoration: none;
         }
     </style>
 </head>
 <body>
-    <div id="html-screen" class="main-content">
-        <!--<img src="Images/testing-bg.jpg" alt="background image"> -->
-        <div class="overlay-text">
-            <h1>You'll make some memories here</h1>
-            <button id="start-btn">welcome home</button>
-        </div>
+    <div class="background-image">
+        <img src="Images/dvd-bg-placeholder.jpg" alt="background to dvd menu">
     </div>
-    
-
-
-<!-- Leave this alone prolly -->
-<canvas id="renderCanvas" style="display: none;"></canvas>
-    <script src="https://cdn.babylonjs.com/babylon.js"></script>
-    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-    <script src="scene.js"></script>
+    <div class="dvd-menu">
+        <h1> Eternal sunshine of the spotless mind </h1>
+        <div class="dvd-menu-items">
+            <h2> <a href="fig-tree.html"> Start</a></h2>
+            <h2> <a href="room.html"> My Room </a></h2>
+        </div>
+        
+    </div>
 </body>
 </html>
