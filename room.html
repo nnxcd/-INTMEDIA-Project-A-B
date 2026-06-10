@@ -5,68 +5,198 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project A-B</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family:sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #000; /* Dark fallback while image loads */
-            overflow: hidden; /* Prevents unwanted scrollbars */
+            font-family: sans-serif;
+            overflow: hidden;
+            background: #fafafa;
         }
 
-        .main-content {
-            /* Force the container to fill the exact size of the browser window */
-            width: 100vw;
-            height: 100vh;
-            
-            /* Apply the background styling directly here 
-            background-image: url('Images/testing-bg.jpg');
-            background-repeat: no-repeat;
-            background-size: cover;
-            background-position: center; */
-            
-            /* Use Flexbox to flawlessly center all children elements */
+        #p5-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 0;
+        }
+
+        /* html-screen wraps everything shown before scene loads */
+        #html-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 5;
+            pointer-events: none; /* let p5 canvas receive mouse events */
+        }
+
+        .top-nav {
+            position: absolute;
+            top: 32px;
+            left: 0;
+            width: 100%;
             display: flex;
             justify-content: center;
-            align-items: center;
-            z-index: 1; /* Ensure it stays above the canvas */
         }
 
-        .overlay-text {
-            padding:20px;
-            /* Text centering rules */
-            text-align: center;
-            color: rgb(0, 0, 0);
-            background-color: white;
-            z-index: 5;
-        }
-
-        /* Subtle button styling to make it stand out */
+        /* id matches what scene.js listens for */
         #start-btn {
-            padding: 10px 20px;
-            font-size: 1.1rem;
+            font-family: sans-serif;
+            font-size: 0.85rem;
+            letter-spacing: 0.12em;
+            text-transform: lowercase;
+            color: rgba(80, 60, 80, 0.75);
+            background: rgba(255, 255, 255, 0.55);
+            border: 1px solid rgba(180, 150, 180, 0.4);
+            padding: 10px 28px;
+            border-radius: 100px;
             cursor: pointer;
-            margin-top: 15px;
+            backdrop-filter: blur(8px);
+            pointer-events: auto; /* re-enable clicks just for the button */
+            transition: background 0.3s, color 0.3s, border-color 0.3s;
         }
+
+        #start-btn:hover {
+            background: rgba(255, 255, 255, 0.85);
+            border-color: rgba(200, 150, 200, 0.7);
+            color: rgba(80, 40, 80, 1);
+        }
+
+
         
-        canvas { 
-            width: 100%; 
-            height: 100vh; 
-        }
     </style>
 </head>
 <body>
-    <div id="html-screen" class="main-content">
-        <!--<img src="Images/testing-bg.jpg" alt="background image"> -->
-        <div class="overlay-text">
-            <h1>You'll make some memories here</h1>
-            <button id="start-btn">welcome home</button>
-        </div>
+
+    <div id="p5-canvas"></div>
+
+    <!-- scene.js hides this div and shows the canvas on start-btn click -->
+    <div id="html-screen">
+        <nav class="top-nav">
+            <button id="start-btn">see where your memories accumulate</button>
+        </nav>
+
+        
     </div>
-    
 
+    <canvas id="renderCanvas" style="display: none;"></canvas>
 
-<!-- Leave this alone prolly -->
-<canvas id="renderCanvas" style="display: none;"></canvas>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <script>
+    new p5(function(p) {
+        let flowers = [];
+
+        p.setup = function() {
+            let cnv = p.createCanvas(p.windowWidth, p.windowHeight);
+            cnv.parent('p5-canvas');
+            p.angleMode(p.RADIANS);
+            p.noStroke();
+            buildFlowers();
+        };
+
+        function buildFlowers() {
+            flowers = [];
+            for (let yBase = 40; yBase < p.height - 20; yBase += 22) {
+                for (let xBase = 20; xBase < p.width - 20; xBase += 14) {
+                    let noiseValue = p.noise(xBase * 0.01, yBase * 0.01);
+                    if (p.random() < p.map(noiseValue, 0, 1, 0.25, 0.95)) {
+                        let stemTopY = p.random(60, p.height - 30);
+                        let stemBottomX = xBase + p.random(-8, 8);
+                        let stemTopX = xBase + p.random(-20, 20);
+
+                        let layer;
+                        if (stemTopY < p.height * 0.3) layer = "back";
+                        else if (stemTopY < p.height * 0.6) layer = "middle";
+                        else layer = "front";
+
+                        let sizeFactor;
+                        if (layer === "back") sizeFactor = p.random(0.5, 0.8);
+                        else if (layer === "middle") sizeFactor = p.random(0.8, 1.2);
+                        else sizeFactor = p.random(1.2, 1.8);
+
+                        let colorType = p.floor(p.random(4));
+                        let flowerR, flowerG, flowerB;
+                        if (colorType === 0) { flowerR = p.random(220,255); flowerG = p.random(120,180); flowerB = p.random(160,220); }
+                        else if (colorType === 1) { flowerR = p.random(230,255); flowerG = p.random(180,230); flowerB = p.random(80,140); }
+                        else if (colorType === 2) { flowerR = p.random(180,230); flowerG = p.random(140,190); flowerB = p.random(200,255); }
+                        else { flowerR = p.random(230,255); flowerG = p.random(210,245); flowerB = p.random(220,255); }
+
+                        let x_adjust = p.random(5,10) * sizeFactor;
+                        let y_adjust = p.random(3,7) * sizeFactor;
+                        let x_adjust_low = p.random(3,7) * sizeFactor;
+                        let y_adjust_long = p.random(6,12) * sizeFactor;
+
+                        let alphaValue;
+                        if (layer === "back") alphaValue = p.random(70,110);
+                        else if (layer === "middle") alphaValue = p.random(110,160);
+                        else alphaValue = p.random(150,210);
+
+                        flowers.push({
+                            baseX: stemBottomX, flowerX: stemTopX, targetY: stemTopY,
+                            x_adjust, y_adjust, x_adjust_low, y_adjust_long,
+                            R: flowerR, G: flowerG, B: flowerB, alphaValue,
+                            layer, sizeFactor,
+                            phase: p.random(p.TWO_PI),
+                            swaySpeed: p.random(0.01, 0.1),
+                            swayAmount: p.map(stemTopY, 0, p.height, 4, 24),
+                            growth: p.random(0.2, 0.9),
+                            growthSpeed: p.random(0.002, 0.008)
+                        });
+                    }
+                }
+            }
+        }
+
+        function drawBackgroundLines() {
+            for (let x = 0; x < p.width; x += 2) {
+                p.strokeWeight(p.random(0.1, 0.3));
+                p.stroke(180 + p.random(50), 180 + p.random(50), 180 + p.random(50), 18);
+                p.line(x, p.height, x + p.random(-40, 40), 0);
+            }
+        }
+
+        function drawFlowerLayer(targetLayer) {
+            for (let f of flowers) {
+                if (f.layer !== targetLayer) continue;
+                if (f.growth < 1) f.growth += f.growthSpeed;
+                let currentY = p.lerp(p.height, f.targetY, p.constrain(f.growth, 0, 1));
+                let wind = p.sin(p.frameCount * f.swaySpeed + f.phase) * f.swayAmount;
+                let d = p.dist(p.mouseX, p.mouseY, f.flowerX, currentY);
+                let mouseInfluence = d < 100 ? p.map(d, 0, 100, 20, 0) : 0;
+                let fx = f.flowerX + wind + p.sin(p.frameCount * 0.15 + f.phase) * mouseInfluence;
+
+                if (f.layer === "back") { p.stroke(210); p.strokeWeight(0.4); }
+                else if (f.layer === "middle") { p.stroke(210); p.strokeWeight(0.7); }
+                else { p.stroke(210); p.strokeWeight(1); }
+                p.line(f.baseX, p.height, fx, currentY);
+
+                let extraAlpha = d < 100 ? p.map(d, 0, 100, 80, 0) : 0;
+                p.noStroke();
+                p.fill(f.R, f.G, f.B, f.alphaValue + extraAlpha);
+                p.triangle(fx, currentY, fx + f.x_adjust, currentY - f.y_adjust, fx + f.x_adjust, currentY + f.y_adjust);
+                p.triangle(fx, currentY, fx - f.x_adjust, currentY - f.y_adjust, fx - f.x_adjust, currentY + f.y_adjust);
+                p.triangle(fx, currentY, fx + f.x_adjust_low, currentY + f.y_adjust_long, fx - f.x_adjust_low, currentY + f.y_adjust_long);
+                p.triangle(fx, currentY, fx + f.x_adjust_low, currentY - f.y_adjust_long, fx - f.x_adjust_low, currentY - f.y_adjust_long);
+
+                if (f.layer === "front") { p.fill(255,240,180,180+extraAlpha*0.5); p.circle(fx, currentY, 2.5*f.sizeFactor); }
+                else if (f.layer === "middle") { p.fill(255,245,200,120+extraAlpha*0.3); p.circle(fx, currentY, 1.8*f.sizeFactor); }
+            }
+        }
+
+        p.draw = function() {
+            p.background(250);
+            drawBackgroundLines();
+            drawFlowerLayer("back");
+            drawFlowerLayer("middle");
+            drawFlowerLayer("front");
+        };
+
+        p.windowResized = function() {
+            p.resizeCanvas(p.windowWidth, p.windowHeight);
+            buildFlowers();
+        };
+    });
+    </script>
+
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
     <script src="scene.js"></script>
