@@ -67,6 +67,19 @@
         transform: rotate(90deg); 
         margin-left: 20%; }
 
+    .story-to-figs {
+        margin-top: 50px;
+        display: none;
+        text-align: center;
+    }
+
+    .story-to-figs a {
+        font-family: 'caslon', serif;
+        font-size: 1rem;
+        color: rgb(61, 101, 67);
+        text-decoration: none;
+    }
+
 </style>
 </head>
 <body>
@@ -76,9 +89,8 @@
 </div>
 
 <div class="content-wrapper">
-  <!-- Added ID 'typewriter-text' for JS targeting -->
   <div class="content" id="typewriter-text">
-    <b>“I saw my life branching out before me like the green fig tree in the story. 
+    <b>"I saw my life branching out before me like the green fig tree in the story. 
         From the tip of every branch, like a fat purple fig, a wonderful future beckoned
          and winked. One fig was a husband and a happy home and children, and another 
          fig was a famous poet and another fig was a brilliant professor, and another 
@@ -93,22 +105,21 @@
               decide, the figs began to wrinkle and go black, and, one by one, they 
               plopped to the ground at my feet."</b>
   </div>
-
-  <div class="arrow-button">
-    <a href="fig-tree.html">
-      <img src="Images/arrow.png" alt="arrow leading to fig tree">
-    </a>
-  </div>
+<div class="story-to-figs" id="ready-to-choose">
+    <a href="fig-tree.html"> Ready to choose? </a>
 </div>
+</div>
+<br>
+
 
 <script>
   const element = document.getElementById('typewriter-text');
+  const readyEl = document.getElementById('ready-to-choose');
   const text = element.innerText;
   element.innerHTML = '<b></b>'; 
   const boldElement = element.querySelector('b');
   let index = 0;
   
-  // ADJUST SPEED HERE: Increase to slow down, decrease to speed up
   const typingSpeed = 10; 
 
   function type() {
@@ -116,6 +127,8 @@
       boldElement.innerHTML += text.charAt(index);
       index++;
       setTimeout(type, typingSpeed);
+    } else {
+      readyEl.style.display = 'block';
     }
   }
   type();

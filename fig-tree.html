@@ -11,6 +11,7 @@
             width: 100%; height: 100%;
             overflow: hidden;
             background-color: #fff;
+            color:black;
         }
         .tree {
             position: absolute;
@@ -30,7 +31,7 @@
             z-index: 10;
         }
         .fruits img {
-            width: 40%;
+            width: 8%;
             height: auto;
             position: absolute;
             transition: transform 0.2s ease;
@@ -81,12 +82,61 @@
             pointer-events: none;
         }
 
-        #fig1  { top: 10%; left: 45%; }
-        #fig2  { top: 35%; left: 35%; }
-        #fig3  { top: 50%; left: 8%; } /* bottom left */
-        #fig4  { top: 10%; left: 8%; } /* top left */
-        #fig5  { top: 60%; left: 55%; } /*bottom right*/
-       
+        #fig1  { top: 10%; left: 80%; }
+        #fig2  { top: 35%; left: 45%; }
+        #fig3  { top: 70%; left: 15%; }
+        #fig4  { top: 10%; left: 12%; }
+        #fig5  { top: 60%; left: 70%; }
+
+        .fig-phrase {
+            position: absolute;
+            display: none;
+            font-family: Arial, sans-serif;
+            font-style: italic;
+            font-size: clamp(13px, 1.3vw, 18px);
+            color: #222;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 60;
+            transform: translateX(-50%);
+        }
+        #fig1-phrase { top: calc(10% - 1.8em); left: 80%; }
+        #fig2-phrase { top: calc(35% - 1.8em); left: 45%; }
+        #fig3-phrase { top: calc(70% - 1.8em); left: 15%; }
+        #fig4-phrase { top: calc(10% - 1.8em); left: 12%; }
+        #fig5-phrase { top: calc(60% - 1.8em); left: 70%; }
+
+        /* Progress ring */
+        .fig-ring {
+            position: absolute;
+            display: none;
+            pointer-events: none;
+            z-index: 61;
+            transform: translate(-50%, -50%);
+        }
+        .fig-ring svg {
+            transform: rotate(-90deg);
+        }
+        .fig-ring .ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 3;
+        }
+        .fig-ring .ring-fill {
+            fill: none;
+            stroke: rgb(79, 47, 87);
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-dasharray: 94.25;
+            stroke-dashoffset: 94.25;
+            transition: stroke-dashoffset 0.05s linear;
+        }
+
+        #fig1-ring { top: calc(10% + 4%); left: calc(80% + 9%); }
+        #fig2-ring { top: calc(35% + 4%); left: calc(45% + 9%); }
+        #fig3-ring { top: calc(70% + 4%); left: calc(15% + 9%); }
+        #fig4-ring { top: calc(10% + 4%); left: calc(12% + 9%); }
+        #fig5-ring { top: calc(60% + 4%); left: calc(70% + 9%); }
     </style>
 </head>
 <body>
@@ -96,26 +146,93 @@
     </div>
 
     <div class="fruits">
-        <img id="fig1"  src="Images/fig-1.PNG" alt="fig fruit 1">
-        <img id="fig2"  src="Images/fig-2.PNG" alt="fig fruit 2">
-        <img id="fig3"  src="Images/fig-3.PNG" alt="fig fruit 3">
-        <img id="fig4"  src="Images/fig-1.PNG" alt="fig fruit 4">
-        <img id="fig5"  src="Images/fig-2.PNG" alt="fig fruit 5">
-        
+        <img id="fig1" src="Images/main-fig.png" alt="fig fruit 1">
+        <img id="fig2" src="Images/main-fig.png" alt="fig fruit 2">
+        <img id="fig3" src="Images/main-fig.png" alt="fig fruit 3">
+        <img id="fig4" src="Images/main-fig.png" alt="fig fruit 4">
+        <img id="fig5" src="Images/main-fig.png" alt="fig fruit 5">
     </div>
 
+    <span id="fig1-phrase" class="fig-phrase">choose to be a gardener</span>
+    <span id="fig2-phrase" class="fig-phrase">choose to be a chef</span>
+    <span id="fig3-phrase" class="fig-phrase">choose to be an engineer</span>
+    <span id="fig4-phrase" class="fig-phrase">choose to be a marine biologist</span>
+    <span id="fig5-phrase" class="fig-phrase">choose to be a painter</span>
+
+    <!-- Progress rings, one per fig -->
+    <div id="fig1-ring" class="fig-ring"><svg width="32" height="32" viewBox="0 0 32 32"><circle class="ring-bg" cx="16" cy="16" r="15"/><circle class="ring-fill" cx="16" cy="16" r="15"/></svg></div>
+    <div id="fig2-ring" class="fig-ring"><svg width="32" height="32" viewBox="0 0 32 32"><circle class="ring-bg" cx="16" cy="16" r="15"/><circle class="ring-fill" cx="16" cy="16" r="15"/></svg></div>
+    <div id="fig3-ring" class="fig-ring"><svg width="32" height="32" viewBox="0 0 32 32"><circle class="ring-bg" cx="16" cy="16" r="15"/><circle class="ring-fill" cx="16" cy="16" r="15"/></svg></div>
+    <div id="fig4-ring" class="fig-ring"><svg width="32" height="32" viewBox="0 0 32 32"><circle class="ring-bg" cx="16" cy="16" r="15"/><circle class="ring-fill" cx="16" cy="16" r="15"/></svg></div>
+    <div id="fig5-ring" class="fig-ring"><svg width="32" height="32" viewBox="0 0 32 32"><circle class="ring-bg" cx="16" cy="16" r="15"/><circle class="ring-fill" cx="16" cy="16" r="15"/></svg></div>
+
     <div id="p5-canvas-container"></div>
-    <div id="hand-status">📷 Starting camera…</div>
+    <div id="hand-status">Hover over a fig and pinch for 5 seconds to pick your future.</div>
 
     <script>
+    const HOVER_DURATION = 5000; // ms
+    const CIRCUMFERENCE = 2 * Math.PI * 15; // ~94.25
+
+    var figIds = ['fig1','fig2','fig3','fig4','fig5'];
+    var hoverTimers = {};
+    var hoverIntervals = {};
+
+    function startHover(id) {
+        if (hoverTimers[id]) return; // already running
+        var phrase = document.getElementById(id + '-phrase');
+        var ring = document.getElementById(id + '-ring');
+        var fill = ring.querySelector('.ring-fill');
+
+        phrase.style.display = 'block';
+        ring.style.display = 'block';
+
+        var startTime = Date.now();
+        fill.style.strokeDashoffset = CIRCUMFERENCE;
+
+        hoverIntervals[id] = setInterval(function() {
+            var elapsed = Date.now() - startTime;
+            var progress = Math.min(elapsed / HOVER_DURATION, 1);
+            fill.style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
+            if (progress >= 1) {
+                clearInterval(hoverIntervals[id]);
+                hoverIntervals[id] = null;
+                window.location.href = 'room.html';
+            }
+        }, 50);
+
+        hoverTimers[id] = true;
+    }
+
+    function stopHover(id) {
+        var phrase = document.getElementById(id + '-phrase');
+        var ring = document.getElementById(id + '-ring');
+        var fill = ring.querySelector('.ring-fill');
+
+        phrase.style.display = 'none';
+        ring.style.display = 'none';
+        fill.style.strokeDashoffset = CIRCUMFERENCE;
+
+        if (hoverIntervals[id]) {
+            clearInterval(hoverIntervals[id]);
+            hoverIntervals[id] = null;
+        }
+        hoverTimers[id] = false;
+    }
+
+    // Mouse hover
+    figIds.forEach(function(id) {
+        var img = document.getElementById(id);
+        img.addEventListener('mouseenter', function() { startHover(id); });
+        img.addEventListener('mouseleave', function() { stopHover(id); });
+    });
+
     new p5(function(p) {
 
         const VIDEO_W     = 640;
         const VIDEO_H     = 480;
         const SHAKE_RADIUS = 140;
         const TIP_INDICES  = [4, 8, 12, 16, 20];
-        // How much to shrink the detected hand region (0.5 = half size)
-        const HAND_SCALE  = 0.5;
+        const HAND_SCALE  = 0.2;
 
         let handpose;
         let video;
@@ -136,7 +253,7 @@
             video.hide();
 
             handpose = ml5.handpose(video.elt, function() {
-                statusEl.textContent = '✋ Hand tracking ready — show your hand!';
+                statusEl.textContent = 'Hand tracking ready';
             });
 
             handpose.on('predict', function(results) {
@@ -164,7 +281,6 @@
                 let pred = predictions[i];
                 if (!pred.landmarks) continue;
 
-                // Scale landmarks from video space to screen space
                 let allPts = [];
                 for (let j = 0; j < pred.landmarks.length; j++) {
                     let lm = pred.landmarks[j];
@@ -174,7 +290,6 @@
                     });
                 }
 
-                // Full bounding box of all landmarks
                 let xs = allPts.map(function(pt) { return pt.x; });
                 let ys = allPts.map(function(pt) { return pt.y; });
                 let minX = Math.min.apply(null, xs);
@@ -182,28 +297,22 @@
                 let minY = Math.min.apply(null, ys);
                 let maxY = Math.max.apply(null, ys);
 
-                // Centre of the detected hand
                 let cx = (minX + maxX) / 2;
                 let cy = (minY + maxY) / 2;
-
-                // Half-size: shrink the bounding region by HAND_SCALE
                 let fullW = maxX - minX;
                 let fullH = maxY - minY;
                 let imgW = fullW * HAND_SCALE;
                 let imgH = fullH * HAND_SCALE;
 
-                // Draw hand-pointing.jpg centred on the hand's centre
                 p.imageMode(p.CENTER);
                 p.image(handImg, cx, cy, imgW, imgH);
 
-                // Fingertips (still using full-scale coords for shake detection)
                 for (let k = 0; k < TIP_INDICES.length; k++) {
                     let idx = TIP_INDICES[k];
                     if (allPts[idx]) tips.push(allPts[idx]);
                 }
             }
 
-            // Shake figs near any fingertip
             let figs = document.querySelectorAll('.fruits img');
             for (let f = 0; f < figs.length; f++) {
                 let rect = figs[f].getBoundingClientRect();
@@ -216,6 +325,13 @@
                     if (Math.sqrt(dx*dx + dy*dy) < SHAKE_RADIUS) { near = true; break; }
                 }
                 figs[f].classList.toggle('hand-shake', near);
+
+                var id = figs[f].id;
+                if (near) {
+                    startHover(id);
+                } else {
+                    stopHover(id);
+                }
             }
         };
 
@@ -223,6 +339,7 @@
             let figs = document.querySelectorAll('.fruits img');
             for (let f = 0; f < figs.length; f++) {
                 figs[f].classList.remove('hand-shake');
+                stopHover(figs[f].id);
             }
         }
 

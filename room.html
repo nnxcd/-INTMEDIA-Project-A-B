@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fleur+De+Leah&family=Miss+Fajardose&display=swap" rel="stylesheet">
     <title>Project A-B</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -13,6 +16,18 @@
             background: #fafafa;
         }
 
+        .fleur-de-leah-regular {
+            font-family: "Fleur De Leah", cursive;
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        .miss-fajardose-regular {
+            font-family: "Miss Fajardose", cursive;
+            font-weight: 400;
+            font-style: normal;
+        }
+
         #p5-canvas {
             position: fixed;
             top: 0; left: 0;
@@ -20,13 +35,12 @@
             z-index: 0;
         }
 
-        /* html-screen wraps everything shown before scene loads */
         #html-screen {
             position: fixed;
             top: 0; left: 0;
             width: 100vw; height: 100vh;
             z-index: 5;
-            pointer-events: none; /* let p5 canvas receive mouse events */
+            pointer-events: none;
         }
 
         .top-nav {
@@ -38,48 +52,39 @@
             justify-content: center;
         }
 
-        /* id matches what scene.js listens for */
         #start-btn {
-            font-family: sans-serif;
-            font-size: 0.85rem;
+            font-family: "Miss Fajardose", cursive;
+            font-size: 2rem;
             letter-spacing: 0.12em;
-            text-transform: lowercase;
             color: rgba(80, 60, 80, 0.75);
-            background: rgba(255, 255, 255, 0.55);
-            border: 1px solid rgba(180, 150, 180, 0.4);
+            background: none;
+            border: none;
             padding: 10px 28px;
             border-radius: 100px;
             cursor: pointer;
             backdrop-filter: blur(8px);
-            pointer-events: auto; /* re-enable clicks just for the button */
-            transition: background 0.3s, color 0.3s, border-color 0.3s;
+            pointer-events: auto;
+            transition: color 0.3s;
         }
 
         #start-btn:hover {
-            background: rgba(255, 255, 255, 0.85);
-            border-color: rgba(200, 150, 200, 0.7);
+            background: none;
+            border: none;
             color: rgba(80, 40, 80, 1);
         }
-
-
-        
     </style>
 </head>
 <body>
 
     <div id="p5-canvas"></div>
 
-    <!-- scene.js hides this div and shows the canvas on start-btn click -->
     <div id="html-screen">
         <nav class="top-nav">
-            <button id="start-btn">see where your memories accumulate</button>
+            <button id="start-btn">Congratulations! Build all your memories here</button>
         </nav>
-
-        
     </div>
 
-    <canvas id="renderCanvas" style="display: none;"></canvas>
-
+    <!-- p5 flower background -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
     <script>
     new p5(function(p) {
@@ -102,34 +107,28 @@
                         let stemTopY = p.random(60, p.height - 30);
                         let stemBottomX = xBase + p.random(-8, 8);
                         let stemTopX = xBase + p.random(-20, 20);
-
                         let layer;
                         if (stemTopY < p.height * 0.3) layer = "back";
                         else if (stemTopY < p.height * 0.6) layer = "middle";
                         else layer = "front";
-
                         let sizeFactor;
                         if (layer === "back") sizeFactor = p.random(0.5, 0.8);
                         else if (layer === "middle") sizeFactor = p.random(0.8, 1.2);
                         else sizeFactor = p.random(1.2, 1.8);
-
                         let colorType = p.floor(p.random(4));
                         let flowerR, flowerG, flowerB;
                         if (colorType === 0) { flowerR = p.random(220,255); flowerG = p.random(120,180); flowerB = p.random(160,220); }
                         else if (colorType === 1) { flowerR = p.random(230,255); flowerG = p.random(180,230); flowerB = p.random(80,140); }
                         else if (colorType === 2) { flowerR = p.random(180,230); flowerG = p.random(140,190); flowerB = p.random(200,255); }
                         else { flowerR = p.random(230,255); flowerG = p.random(210,245); flowerB = p.random(220,255); }
-
                         let x_adjust = p.random(5,10) * sizeFactor;
                         let y_adjust = p.random(3,7) * sizeFactor;
                         let x_adjust_low = p.random(3,7) * sizeFactor;
                         let y_adjust_long = p.random(6,12) * sizeFactor;
-
                         let alphaValue;
                         if (layer === "back") alphaValue = p.random(70,110);
                         else if (layer === "middle") alphaValue = p.random(110,160);
                         else alphaValue = p.random(150,210);
-
                         flowers.push({
                             baseX: stemBottomX, flowerX: stemTopX, targetY: stemTopY,
                             x_adjust, y_adjust, x_adjust_low, y_adjust_long,
@@ -163,12 +162,10 @@
                 let d = p.dist(p.mouseX, p.mouseY, f.flowerX, currentY);
                 let mouseInfluence = d < 100 ? p.map(d, 0, 100, 20, 0) : 0;
                 let fx = f.flowerX + wind + p.sin(p.frameCount * 0.15 + f.phase) * mouseInfluence;
-
                 if (f.layer === "back") { p.stroke(210); p.strokeWeight(0.4); }
                 else if (f.layer === "middle") { p.stroke(210); p.strokeWeight(0.7); }
                 else { p.stroke(210); p.strokeWeight(1); }
                 p.line(f.baseX, p.height, fx, currentY);
-
                 let extraAlpha = d < 100 ? p.map(d, 0, 100, 80, 0) : 0;
                 p.noStroke();
                 p.fill(f.R, f.G, f.B, f.alphaValue + extraAlpha);
@@ -176,7 +173,6 @@
                 p.triangle(fx, currentY, fx - f.x_adjust, currentY - f.y_adjust, fx - f.x_adjust, currentY + f.y_adjust);
                 p.triangle(fx, currentY, fx + f.x_adjust_low, currentY + f.y_adjust_long, fx - f.x_adjust_low, currentY + f.y_adjust_long);
                 p.triangle(fx, currentY, fx + f.x_adjust_low, currentY - f.y_adjust_long, fx - f.x_adjust_low, currentY - f.y_adjust_long);
-
                 if (f.layer === "front") { p.fill(255,240,180,180+extraAlpha*0.5); p.circle(fx, currentY, 2.5*f.sizeFactor); }
                 else if (f.layer === "middle") { p.fill(255,245,200,120+extraAlpha*0.3); p.circle(fx, currentY, 1.8*f.sizeFactor); }
             }
@@ -197,8 +193,10 @@
     });
     </script>
 
-    <script src="https://cdn.babylonjs.com/babylon.js"></script>
-    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <!-- Three.js + GLTFLoader + OrbitControls (all from CDN) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="scene.js"></script>
 </body>
 </html>
