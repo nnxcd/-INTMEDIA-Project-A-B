@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Index</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        #stage {
+            width: 100vw;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 40px;
+        }
+
+        #para {
+            max-width: 560px;
+            font-family: Georgia, serif;
+            font-size: 16px;
+            line-height: 2;
+            color: #111;
+            text-align: left;
+        }
+
+        .word {
+            display: inline-block;
+            position: relative;
+            margin-right: 0.28em;
+            will-change: transform;
+        }
+    </style>
+</head>
+<body>
+
+<div id="stage">
+    <p id="para"></p>
+</div>
+
+<script>
+    const TEXT = "If given the chance to look at all possibilities in your life, what would you pick? If you could retrieve every single memory and feeling you’ve had with absolutely clarity, would you want that? Would you love something to keep it with you forever, or let it wither against the throes of time. ";
+
+    const para = document.getElementById('para');
+    const stage = document.getElementById('stage');
+
+    TEXT.split(' ').forEach(w => {
+        const span = document.createElement('span');
+        span.className = 'word';
+        span.textContent = w;
+        para.appendChild(span);
+    });
+
+    const words = para.querySelectorAll('.word');
+    const RADIUS = 90;
+    const STRENGTH = 28;
+
+    stage.addEventListener('mousemove', e => {
+        const rect = stage.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+
+        words.forEach(word => {
+            const wr = word.getBoundingClientRect();
+            const wx = wr.left + wr.width / 2 - rect.left;
+            const wy = wr.top + wr.height / 2 - rect.top;
+            const dx = wx - mx;
+            const dy = wy - my;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < RADIUS) {
+                const force = (1 - dist / RADIUS);
+                const tx = (dx / dist) * force * STRENGTH;
+                const ty = (dy / dist) * force * STRENGTH;
+                word.style.transform = `translate(${tx}px, ${ty}px)`;
+                word.style.transition = 'transform 0.15s ease-out';
+            } else {
+                word.style.transform = 'translate(0,0)';
+                word.style.transition = 'transform 0.6s cubic-bezier(0.23, 1, 0.32, 1)';
+            }
+        });
+    });
+
+    stage.addEventListener('mouseleave', () => {
+        words.forEach(word => {
+            word.style.transform = 'translate(0,0)';
+            word.style.transition = 'transform 0.8s cubic-bezier(0.23, 1, 0.32, 1)';
+        });
+    });
+</script>
+
+
+</body>
+</html>

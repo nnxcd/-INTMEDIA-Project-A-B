@@ -6,7 +6,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
     <script src="https://unpkg.com/ml5@0.12.2/dist/ml5.min.js"></script>
     <style>
+        @font-face {
+        font-family: 'caslon';
+        src: url('Fonts/CAS.ttf') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'caslon-italic';
+            src: url('Fonts/Caslo-ai.ttf') format('truetype');
+        }
         html, body {
+            font-family: 'caslon', serif;
             margin: 0; padding: 0;
             width: 100%; height: 100%;
             overflow: hidden;
@@ -73,10 +83,12 @@
             position: fixed;
             bottom: 16px; right: 16px;
             z-index: 100;
-            background: rgba(0,0,0,0.6);
+            background: none;
+            text-align: right;
+            
             color: #fff;
-            font-family: monospace;
-            font-size: 12px;
+            font-family: 'caslon', serif;
+            font-size: 20px;
             padding: 6px 14px;
             border-radius: 20px;
             pointer-events: none;
@@ -91,8 +103,6 @@
         .fig-phrase {
             position: absolute;
             display: none;
-            font-family: Arial, sans-serif;
-            font-style: italic;
             font-size: clamp(13px, 1.3vw, 18px);
             color: #222;
             white-space: nowrap;
@@ -167,7 +177,7 @@
     <div id="fig5-ring" class="fig-ring"><svg width="32" height="32" viewBox="0 0 32 32"><circle class="ring-bg" cx="16" cy="16" r="15"/><circle class="ring-fill" cx="16" cy="16" r="15"/></svg></div>
 
     <div id="p5-canvas-container"></div>
-    <div id="hand-status">Hover over a fig and pinch for 5 seconds to pick your future.</div>
+    <div id="hand-status">Hover over a fig and <br> pinch for 5 seconds to pick your future.</div>
 
     <script>
     const HOVER_DURATION = 5000; // ms
@@ -316,7 +326,7 @@
                 return;
             }
 
-            statusEl.textContent = '🖐 Hand detected (' + predictions.length + ')';
+            statusEl.textContent = 'Hand detected (' + predictions.length + ')';
 
             let tips = [];
 

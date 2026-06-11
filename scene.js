@@ -23,7 +23,160 @@ function initScene() {
     controls.dampingFactor = 0.08;
     controls.enabled = false;
 
-    // ── Scroll driver ────────────────────────────────────────────────────────
+    // ── Text overlay ──────────────────────────────────────────────────────────
+    const TEXT = "If given the chance to look at all possibilities in your life, what would you pick? If you could retrieve every single memory and feeling you've had with absolutely clarity, would you want that? Would you love something to keep it with you forever, or let it wither against the throes of time. ";
+
+    // Backdrop — full-screen dark wash, click anywhere on it to dismiss
+    const textOverlay = document.createElement("div");
+    textOverlay.style.cssText = [
+        "position:fixed","top:0","left:0","width:100%","height:100%",
+        "z-index:15",
+        "display:flex","align-items:center","justify-content:center",
+        "padding:60px 40px",
+        "pointer-events:none",
+        "opacity:0",
+        "transition:opacity 1.5s ease",
+        "background:rgba(2,2,2,0)",
+        "cursor:pointer"
+    ].join(";");
+
+    // Paragraph — stops click from bubbling so tapping the text itself doesn't dismiss
+    const textPara = document.createElement("p");
+    textPara.style.cssText = [
+        "max-width:560px",
+        "font-family:Georgia,serif",
+        "font-size:16px",
+        "line-height:2",
+        "color:#e8e0d8",
+        "text-align:left",
+        "cursor:default",
+        "user-select:none"
+    ].join(";");
+
+    TEXT.split(" ").forEach(w => {
+        if (!w.trim()) return;
+        const span = document.createElement("span");
+        span.className = "word";
+        span.textContent = w;
+        span.style.cssText = "display:inline-block;position:relative;will-change:transform;margin-right:0.28em;";
+        textPara.appendChild(span);
+    });
+
+    textOverlay.appendChild(textPara);
+    document.body.appendChild(textOverlay);
+
+    // ── Start Again button ────────────────────────────────────────────────────
+    const startAgainBtn = document.createElement("button");
+    startAgainBtn.innerText = "start again";
+    startAgainBtn.style.cssText = [
+        "position:fixed","top:28px","left:32px",
+        "z-index:20",
+        "font-family:'Miss Fajardose', cursive",
+        "font-size:1.5rem",
+        "letter-spacing:0.1em",
+        "color:rgba(232,224,216,0.75)",
+        "background:none",
+        "border:none",
+        "padding:0",
+        "cursor:pointer",
+        "pointer-events:none",
+        "opacity:0",
+        "transition:opacity 1.5s ease, color 0.3s"
+    ].join(";");
+
+    startAgainBtn.addEventListener("mouseenter", () => {
+        startAgainBtn.style.color = "rgba(232,224,216,1)";
+    });
+    startAgainBtn.addEventListener("mouseleave", () => {
+        startAgainBtn.style.color = "rgba(232,224,216,0.75)";
+    });
+    startAgainBtn.addEventListener("click", () => {
+        window.location.href = "index.html";
+    });
+
+    document.body.appendChild(startAgainBtn);
+
+    // ── Text state ────────────────────────────────────────────────────────────
+    let textVisible   = false;
+    let textTimerSet  = false;   // true once the 4 s timer has been started
+    let roomFormedAt  = null;    // timestamp when room first hit FORMED_THRESHOLD
+    const TEXT_DELAY_MS = 4000;  // wait 4 s after room forms before fading text in
+
+    function showText() {
+        if (textVisible) return;
+        textVisible = true;
+        textOverlay.style.pointerEvents = "auto";
+        // Slight dark wash so Georgia type is legible over the point cloud
+        textOverlay.style.background    = "rgba(2,2,2,0.38)";
+        textOverlay.style.opacity       = "1";
+        // Show the Start Again button — it stays visible even after text is dismissed
+        startAgainBtn.style.opacity       = "1";
+        startAgainBtn.style.pointerEvents = "auto";
+    }
+
+    function hideText() {
+        if (!textVisible) return;
+        textVisible  = false;
+        textTimerSet = false;   // allow it to reappear if user scrolls away and back
+        roomFormedAt = null;
+        textOverlay.style.pointerEvents = "none";
+        textOverlay.style.background    = "rgba(2,2,2,0)";
+        textOverlay.style.opacity       = "0";
+        // Reset word positions
+        textPara.querySelectorAll(".word").forEach(w => {
+            w.style.transform  = "translate(0,0)";
+            w.style.transition = "transform 0.6s cubic-bezier(0.23,1,0.32,1)";
+        });
+        // startAgainBtn stays visible — intentionally not hidden here
+    }
+
+    // Click backdrop (outside the paragraph) → dismiss
+    textOverlay.addEventListener("click", e => {
+        if (e.target !== textPara && !textPara.contains(e.target)) {
+            hideText();
+        }
+    });
+
+    // Stop paragraph clicks from reaching the backdrop
+    textPara.addEventListener("click", e => e.stopPropagation());
+
+    // ── Word repulsion ────────────────────────────────────────────────────────
+    const RADIUS   = 90;
+    const STRENGTH = 28;
+
+    textOverlay.addEventListener("mousemove", e => {
+        if (!textVisible) return;
+        const rect = textOverlay.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        textPara.querySelectorAll(".word").forEach(word => {
+            const wr = word.getBoundingClientRect();
+            const wx = wr.left + wr.width  / 2 - rect.left;
+            const wy = wr.top  + wr.height / 2 - rect.top;
+            const dx = wx - mx;
+            const dy = wy - my;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < RADIUS) {
+                const force = 1 - dist / RADIUS;
+                const tx = (dx / dist) * force * STRENGTH;
+                const ty = (dy / dist) * force * STRENGTH;
+                word.style.transform  = `translate(${tx}px,${ty}px)`;
+                word.style.transition = "transform 0.15s ease-out";
+            } else {
+                word.style.transform  = "translate(0,0)";
+                word.style.transition = "transform 0.6s cubic-bezier(0.23,1,0.32,1)";
+            }
+        });
+    });
+
+    textOverlay.addEventListener("mouseleave", () => {
+        textPara.querySelectorAll(".word").forEach(word => {
+            word.style.transform  = "translate(0,0)";
+            word.style.transition = "transform 0.8s cubic-bezier(0.23,1,0.32,1)";
+        });
+    });
+
+    // ── Scroll driver ─────────────────────────────────────────────────────────
     let scrollProgress = 0;
     let mode = "scroll";
     const FORMED_THRESHOLD = 0.98;
@@ -38,21 +191,21 @@ function initScene() {
     inner.style.cssText = "height:400vh;width:100%;";
 
     const hint = document.createElement("div");
-    hint.innerText = "↓ scroll to form the room";
+    hint.innerText = "↓ Scroll to form your room";
     hint.style.cssText = [
         "position:sticky","top:20px","text-align:center",
-        "color:rgba(255,255,255,0.55)","font-family:sans-serif",
-        "font-size:14px","letter-spacing:0.08em",
+        "color:rgba(255,255,255,0.55)","font-family:Georgia,serif",
+        "font-size:15px","letter-spacing:0.08em",
         "pointer-events:none","user-select:none",
         "padding-top:20px","transition:opacity 0.4s"
     ].join(";");
 
     const orbitHint = document.createElement("div");
-    orbitHint.innerText = "drag to orbit · scroll up to scatter";
+    orbitHint.innerText = "Drag to orbit your view";
     orbitHint.style.cssText = [
         "position:fixed","bottom:24px","left:0","right:0",
         "text-align:center","color:rgba(255,255,255,0.45)",
-        "font-family:sans-serif","font-size:13px","letter-spacing:0.08em",
+        "font-family:Georgia,serif","font-size:20px","letter-spacing:0.08em",
         "pointer-events:none","user-select:none",
         "opacity:0","transition:opacity 0.6s","z-index:20"
     ].join(";");
@@ -91,6 +244,7 @@ function initScene() {
         controls.enabled = false;
         orbitHint.style.opacity = "0";
         scrollProgress = 0.95;
+        hideText();   // dismiss text when user scrolls back to reform mode
         const ns = document.createElement("div");
         ns.style.cssText = scroller.style.cssText;
         const ni = document.createElement("div");
@@ -113,33 +267,39 @@ function initScene() {
         if (scrollProgress >= FORMED_THRESHOLD) enterOrbitMode();
     }, { passive: true });
 
+    // ── Room-formed timer: called from the render loop ────────────────────────
+    function tickTextTimer() {
+        if (textTimerSet || textVisible) return;
+        if (mode !== "orbit") return;   // only start timing once in orbit mode
+        if (roomFormedAt === null) {
+            roomFormedAt = performance.now();
+            return;
+        }
+        if (performance.now() - roomFormedAt >= TEXT_DELAY_MS) {
+            textTimerSet = true;
+            showText();
+        }
+    }
+
     function easeOutCubic(t) { const u = 1 - t; return 1 - u * u * u; }
 
-    // ── Colour helper: get the base colour from a mesh's material ────────────
-    // Returns [r, g, b] in 0-1 range
+    // ── Colour helpers ────────────────────────────────────────────────────────
     function getMaterialColor(mesh) {
         const mat = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
         if (!mat) return [1, 1, 1];
-
-        // MeshStandardMaterial / MeshPhysicalMaterial use .color
-        if (mat.color) {
-            return [mat.color.r, mat.color.g, mat.color.b];
-        }
+        if (mat.color) return [mat.color.r, mat.color.g, mat.color.b];
         return [1, 1, 1];
     }
 
-    // ── UV → texture colour sampler (reads a pixel from a canvas) ────────────
-    // Returns a cached canvas 2D context per texture
     const texCache = new Map();
     function getTexCtx(texture) {
         if (texCache.has(texture.uuid)) return texCache.get(texture.uuid);
         const img = texture.image;
         if (!img || (!img.width && !img.videoWidth)) return null;
-        const w = img.naturalWidth || img.width || img.videoWidth || 1;
-        const h = img.naturalHeight || img.height || img.videoHeight || 1;
+        const w = img.naturalWidth  || img.width       || img.videoWidth  || 1;
+        const h = img.naturalHeight || img.height      || img.videoHeight || 1;
         const cv = document.createElement("canvas");
-        cv.width  = w;
-        cv.height = h;
+        cv.width = w; cv.height = h;
         const ctx = cv.getContext("2d");
         ctx.drawImage(img, 0, 0, w, h);
         texCache.set(texture.uuid, { ctx, w, h });
@@ -149,27 +309,24 @@ function initScene() {
     function sampleTexture(texture, u, v) {
         const tc = getTexCtx(texture);
         if (!tc) return null;
-        // Wrap UVs
         u = ((u % 1) + 1) % 1;
         v = ((v % 1) + 1) % 1;
         const px = Math.floor(u * tc.w);
-        const py = Math.floor((1 - v) * tc.h); // flip Y
+        const py = Math.floor((1 - v) * tc.h);
         try {
             const d = tc.ctx.getImageData(px, py, 1, 1).data;
             return [d[0] / 255, d[1] / 255, d[2] / 255];
-        } catch(e) {
-            return null;
-        }
+        } catch(e) { return null; }
     }
 
-    // ── Point cloud state ────────────────────────────────────────────────────
+    // ── Point cloud state ─────────────────────────────────────────────────────
     let pointMesh = null;
     let homePos   = null;
     let offsetPos = null;
     let ready     = false;
     let time      = 0;
 
-    // ── Load GLB ─────────────────────────────────────────────────────────────
+    // ── Load GLB ──────────────────────────────────────────────────────────────
     const loader = new THREE.GLTFLoader();
     loader.load("room(1).glb", (gltf) => {
 
@@ -188,7 +345,6 @@ function initScene() {
             const colAttr = geo.attributes.color;
             const count   = posAttr.count;
 
-            // World-space positions
             const worldPos = new Float32Array(count * 3);
             const tmpVec   = new THREE.Vector3();
             for (let i = 0; i < count; i++) {
@@ -199,22 +355,16 @@ function initScene() {
             }
             positionArrays.push(worldPos);
 
-            // ── Colour priority: vertex colour → texture map → material colour
-            const meshCol = new Float32Array(count * 3);
-            const mat = Array.isArray(child.material) ? child.material[0] : child.material;
-            const map = mat && mat.map ? mat.map : null;
+            const meshCol   = new Float32Array(count * 3);
+            const mat       = Array.isArray(child.material) ? child.material[0] : child.material;
+            const map       = mat && mat.map ? mat.map : null;
             const baseColor = getMaterialColor(child);
 
             for (let i = 0; i < count; i++) {
                 let r, g, b;
-
                 if (colAttr) {
-                    // 1. Per-vertex colour attribute
-                    r = colAttr.getX(i);
-                    g = colAttr.getY(i);
-                    b = colAttr.getZ(i);
+                    r = colAttr.getX(i); g = colAttr.getY(i); b = colAttr.getZ(i);
                 } else if (map && uvAttr) {
-                    // 2. Sample the diffuse/map texture at this vertex's UV
                     const u = uvAttr.getX(i);
                     const v = uvAttr.getY(i);
                     const sampled = sampleTexture(map, u, v);
@@ -223,27 +373,18 @@ function initScene() {
                         g = sampled[1] * baseColor[1];
                         b = sampled[2] * baseColor[2];
                     } else {
-                        r = baseColor[0];
-                        g = baseColor[1];
-                        b = baseColor[2];
+                        r = baseColor[0]; g = baseColor[1]; b = baseColor[2];
                     }
                 } else {
-                    // 3. Just use the material's base colour
-                    r = baseColor[0];
-                    g = baseColor[1];
-                    b = baseColor[2];
+                    r = baseColor[0]; g = baseColor[1]; b = baseColor[2];
                 }
-
-                meshCol[i * 3]     = r;
-                meshCol[i * 3 + 1] = g;
-                meshCol[i * 3 + 2] = b;
+                meshCol[i * 3] = r; meshCol[i * 3 + 1] = g; meshCol[i * 3 + 2] = b;
             }
 
             colorArrays.push(meshCol);
             totalVerts += count;
         });
 
-        // Subsample to ≤150 000 points
         const MAX_PTS = 150000;
         const step    = Math.max(1, Math.floor(totalVerts / MAX_PTS));
 
@@ -268,7 +409,6 @@ function initScene() {
             sampledCol[o * 3 + 2] = allCol[i * 3 + 2];
         }
 
-        // Centre the cloud
         let cx = 0, cy = 0, cz = 0;
         for (let i = 0; i < usedCount; i++) {
             cx += sampledPos[i * 3];
@@ -282,7 +422,6 @@ function initScene() {
             sampledPos[i * 3 + 2] -= cz;
         }
 
-        // Dispersal offsets
         homePos   = sampledPos.slice();
         offsetPos = new Float32Array(usedCount * 3);
         for (let i = 0; i < usedCount; i++) {
@@ -308,7 +447,6 @@ function initScene() {
         pointMesh = new THREE.Points(geo, mat);
         scene.add(pointMesh);
 
-        // Start dispersed
         for (let i = 0; i < usedCount; i++) {
             posAttrBuf.array[i * 3]     = homePos[i * 3]     + offsetPos[i * 3];
             posAttrBuf.array[i * 3 + 1] = homePos[i * 3 + 1] + offsetPos[i * 3 + 1];
@@ -320,10 +458,11 @@ function initScene() {
     undefined,
     (err) => console.error("GLB load error:", err));
 
-    // ── Render loop ──────────────────────────────────────────────────────────
+    // ── Render loop ───────────────────────────────────────────────────────────
     function animate() {
         requestAnimationFrame(animate);
         controls.update();
+        tickTextTimer();
 
         if (ready && pointMesh) {
             time += 0.005;

@@ -62,7 +62,7 @@
             padding: 10px 28px;
             border-radius: 100px;
             cursor: pointer;
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(2px);
             pointer-events: auto;
             transition: color 0.3s;
         }
@@ -80,13 +80,12 @@
 
     <div id="html-screen">
         <nav class="top-nav">
-            <button id="start-btn">Congratulations! Build all your memories here</button>
+            <button id="start-btn">Congratulations! See where all your memories collect </button>
         </nav>
     </div>
 
-<!-- https://openprocessing.org/@wayne_lin_32170/118253 maybe try this one -->
- <!-- credits for p5 below: https://openprocessing.org/@u587315/2899421 -->
     <!-- p5 flower background -->
+    <!-- credits: https://openprocessing.org/@u587315/2899421 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
     <script>
     new p5(function(p) {
@@ -147,7 +146,6 @@
         }
     }
 
-    // Wayne Lin-style: sparkle white points scattered across the canvas
     function drawSparklePoints() {
         p.stroke(252, 252, 252, 180);
         p.strokeWeight(1);
@@ -159,7 +157,6 @@
         p.noStroke();
     }
 
-    // Wayne Lin-style: soft pastel light blobs (his "drawSun")
     function drawLightBlobs() {
         p.noStroke();
         for (let i = 0; i < 3; i++) {
@@ -170,19 +167,16 @@
         }
     }
 
-    // Wayne Lin-style green grass lines — replaces the old grey background lines
     function drawBackgroundLines() {
         let xstep = 2;
         let border = 5;
         for (let x = border; x <= p.width - border; x += xstep) {
-            // Green grass: random(50) gives dark greens, random(198) mids, random(100) for B keeps it green
             let r = p.random(30, 80);
             let g = p.random(120, 198);
             let b = p.random(40, 110);
             let a = p.random(20, 80);
             p.stroke(r, g, b, a);
             p.strokeWeight(p.random(0.3, 0.8));
-            // Wayne Lin's grass: slight random lean to each blade
             let x1 = x + p.random(-40, 40);
             p.line(x, p.height, x1, 0);
         }
@@ -198,7 +192,6 @@
             let mouseInfluence = d < 100 ? p.map(d, 0, 100, 20, 0) : 0;
             let fx = f.flowerX + wind + p.sin(p.frameCount * 0.15 + f.phase) * mouseInfluence;
 
-            // Green-tinted stems: darker greens for back, brighter for front
             if (f.layer === "back") {
                 p.stroke(p.random(40,80), p.random(130,170), p.random(50,90), 60);
                 p.strokeWeight(0.4);
@@ -224,7 +217,6 @@
     }
 
     p.draw = function() {
-        // Wayne Lin's background: light green-white base instead of pure white
         p.background(224, 238, 220);
         drawBackgroundLines();
         drawLightBlobs();
@@ -251,9 +243,7 @@
         window.addEventListener('load', function() {
             const audio = document.getElementById('introAudio');
             if (audio && audio.paused) {
-                audio.play().catch(() => {
-                    // Autoplay may be blocked by the browser; user interaction is required.
-                });
+                audio.play().catch(() => {});
             }
         });
     </script>
