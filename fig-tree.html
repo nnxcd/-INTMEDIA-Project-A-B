@@ -173,15 +173,43 @@
     const HOVER_DURATION = 5000; // ms
     const CIRCUMFERENCE = 2 * Math.PI * 15; // ~94.25
 
+    const figSoundFiles = {
+        fig1: 'music/ohayashi-first-ding.mp3',
+        fig2: 'music/ohayashi-second-ding.mp3',
+        fig3: 'music/ohayashi-third-ding.mp3',
+        fig4: 'music/ohayashi-fourth-ding.mp3',
+        fig5: 'music/ohayashi-fifth-ding.mp3'
+    };
+
+    const figAudio = {};
+    Object.keys(figSoundFiles).forEach(function(id) {
+        const audio = new Audio(figSoundFiles[id]);
+        audio.preload = 'auto';
+        figAudio[id] = audio;
+    });
+
     var figIds = ['fig1','fig2','fig3','fig4','fig5'];
-    var hoverTimers = {};
+    var mouseHover = {};
+    var handHover = {};
+    var hoverActive = {};
     var hoverIntervals = {};
 
-    function startHover(id) {
-        if (hoverTimers[id]) return; // already running
+    function isHovering(id) {
+        return mouseHover[id] || handHover[id];
+    }
+
+    function activateHover(id) {
+        if (hoverActive[id]) return; // already visible
         var phrase = document.getElementById(id + '-phrase');
         var ring = document.getElementById(id + '-ring');
         var fill = ring.querySelector('.ring-fill');
+        var sound = figAudio[id];
+        if (sound) {
+            sound.currentTime = 0;
+            sound.play().catch(function() {
+                // ignore autoplay or playback errors
+            });
+        }
 
         phrase.style.display = 'block';
         ring.style.display = 'block';
@@ -200,10 +228,11 @@
             }
         }, 50);
 
-        hoverTimers[id] = true;
+        hoverActive[id] = true;
     }
 
-    function stopHover(id) {
+    function deactivateHover(id) {
+        if (!hoverActive[id]) return;
         var phrase = document.getElementById(id + '-phrase');
         var ring = document.getElementById(id + '-ring');
         var fill = ring.querySelector('.ring-fill');
@@ -216,14 +245,28 @@
             clearInterval(hoverIntervals[id]);
             hoverIntervals[id] = null;
         }
-        hoverTimers[id] = false;
+        hoverActive[id] = false;
+    }
+
+    function updateHoverState(id) {
+        if (isHovering(id)) {
+            activateHover(id);
+        } else {
+            deactivateHover(id);
+        }
     }
 
     // Mouse hover
     figIds.forEach(function(id) {
         var img = document.getElementById(id);
-        img.addEventListener('mouseenter', function() { startHover(id); });
-        img.addEventListener('mouseleave', function() { stopHover(id); });
+        img.addEventListener('mouseenter', function() {
+            mouseHover[id] = true;
+            updateHoverState(id);
+        });
+        img.addEventListener('mouseleave', function() {
+            mouseHover[id] = false;
+            updateHoverState(id);
+        });
     });
 
     new p5(function(p) {
@@ -327,11 +370,8 @@
                 figs[f].classList.toggle('hand-shake', near);
 
                 var id = figs[f].id;
-                if (near) {
-                    startHover(id);
-                } else {
-                    stopHover(id);
-                }
+                handHover[id] = near;
+                updateHoverState(id);
             }
         };
 
@@ -339,7 +379,9 @@
             let figs = document.querySelectorAll('.fruits img');
             for (let f = 0; f < figs.length; f++) {
                 figs[f].classList.remove('hand-shake');
-                stopHover(figs[f].id);
+                var id = figs[f].id;
+                handHover[id] = false;
+                updateHoverState(id);
             }
         }
 

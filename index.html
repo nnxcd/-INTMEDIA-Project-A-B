@@ -137,5 +137,16 @@
         </div>
         
     </div>
+    <audio id="introAudio" src="music/parfum-intro.mp3" preload="auto" autoplay loop></audio>
+    <script>
+        window.addEventListener('load', function() {
+            const audio = document.getElementById('introAudio');
+            if (audio && audio.paused) {
+                audio.play().catch(() => {
+                    // Autoplay may be blocked by the browser; user interaction is required.
+                });
+            }
+        });
+    </script>
 </body>
 </html>

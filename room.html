@@ -200,5 +200,16 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="scene.js"></script>
+    <audio id="introAudio" src="music/end-of-august.mp3" preload="auto" autoplay loop></audio>
+    <script>
+        window.addEventListener('load', function() {
+            const audio = document.getElementById('introAudio');
+            if (audio && audio.paused) {
+                audio.play().catch(() => {
+                    // Autoplay may be blocked by the browser; user interaction is required.
+                });
+            }
+        });
+    </script>
 </body>
 </html>
