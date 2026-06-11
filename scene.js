@@ -24,7 +24,7 @@ function initScene() {
     controls.enabled = false;
 
     // ── Text overlay ──────────────────────────────────────────────────────────
-    const TEXT = "If given the chance to look at all possibilities in your life, what would you pick? If you could retrieve every single memory and feeling you've had with absolutely clarity, would you want that? Would you love something to keep it with you forever, or let it wither against the throes of time. ";
+    const TEXT = "If given the chance to look at all possibilities in your life, what would you pick? If you could retrieve every single memory and feeling you've had with absolutely clarity, would you want that? Would you love something to keep it with you forever in your limited memory, or let it wither against the throes of time. ";
 
     // Backdrop — full-screen dark wash, click anywhere on it to dismiss
     const textOverlay = document.createElement("div");
@@ -67,7 +67,7 @@ function initScene() {
 
     // ── Start Again button ────────────────────────────────────────────────────
     const startAgainBtn = document.createElement("button");
-    startAgainBtn.innerText = "start again";
+    startAgainBtn.innerText = "Start again";
     startAgainBtn.style.cssText = [
         "position:fixed","top:28px","left:32px",
         "z-index:20",
