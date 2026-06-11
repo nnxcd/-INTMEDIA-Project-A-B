@@ -90,109 +90,155 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
     <script>
     new p5(function(p) {
-        let flowers = [];
+    let flowers = [];
 
-        p.setup = function() {
-            let cnv = p.createCanvas(p.windowWidth, p.windowHeight);
-            cnv.parent('p5-canvas');
-            p.angleMode(p.RADIANS);
-            p.noStroke();
-            buildFlowers();
-        };
+    p.setup = function() {
+        let cnv = p.createCanvas(p.windowWidth, p.windowHeight);
+        cnv.parent('p5-canvas');
+        p.angleMode(p.RADIANS);
+        p.noStroke();
+        buildFlowers();
+    };
 
-        function buildFlowers() {
-            flowers = [];
-            for (let yBase = 40; yBase < p.height - 20; yBase += 22) {
-                for (let xBase = 20; xBase < p.width - 20; xBase += 14) {
-                    let noiseValue = p.noise(xBase * 0.01, yBase * 0.01);
-                    if (p.random() < p.map(noiseValue, 0, 1, 0.25, 0.95)) {
-                        let stemTopY = p.random(60, p.height - 30);
-                        let stemBottomX = xBase + p.random(-8, 8);
-                        let stemTopX = xBase + p.random(-20, 20);
-                        let layer;
-                        if (stemTopY < p.height * 0.3) layer = "back";
-                        else if (stemTopY < p.height * 0.6) layer = "middle";
-                        else layer = "front";
-                        let sizeFactor;
-                        if (layer === "back") sizeFactor = p.random(0.5, 0.8);
-                        else if (layer === "middle") sizeFactor = p.random(0.8, 1.2);
-                        else sizeFactor = p.random(1.2, 1.8);
-                        let colorType = p.floor(p.random(4));
-                        let flowerR, flowerG, flowerB;
-                        if (colorType === 0) { flowerR = p.random(220,255); flowerG = p.random(120,180); flowerB = p.random(160,220); }
-                        else if (colorType === 1) { flowerR = p.random(230,255); flowerG = p.random(180,230); flowerB = p.random(80,140); }
-                        else if (colorType === 2) { flowerR = p.random(180,230); flowerG = p.random(140,190); flowerB = p.random(200,255); }
-                        else { flowerR = p.random(230,255); flowerG = p.random(210,245); flowerB = p.random(220,255); }
-                        let x_adjust = p.random(5,10) * sizeFactor;
-                        let y_adjust = p.random(3,7) * sizeFactor;
-                        let x_adjust_low = p.random(3,7) * sizeFactor;
-                        let y_adjust_long = p.random(6,12) * sizeFactor;
-                        let alphaValue;
-                        if (layer === "back") alphaValue = p.random(70,110);
-                        else if (layer === "middle") alphaValue = p.random(110,160);
-                        else alphaValue = p.random(150,210);
-                        flowers.push({
-                            baseX: stemBottomX, flowerX: stemTopX, targetY: stemTopY,
-                            x_adjust, y_adjust, x_adjust_low, y_adjust_long,
-                            R: flowerR, G: flowerG, B: flowerB, alphaValue,
-                            layer, sizeFactor,
-                            phase: p.random(p.TWO_PI),
-                            swaySpeed: p.random(0.01, 0.1),
-                            swayAmount: p.map(stemTopY, 0, p.height, 4, 24),
-                            growth: p.random(0.2, 0.9),
-                            growthSpeed: p.random(0.002, 0.008)
-                        });
-                    }
+    function buildFlowers() {
+        flowers = [];
+        for (let yBase = 40; yBase < p.height - 20; yBase += 22) {
+            for (let xBase = 20; xBase < p.width - 20; xBase += 14) {
+                let noiseValue = p.noise(xBase * 0.01, yBase * 0.01);
+                if (p.random() < p.map(noiseValue, 0, 1, 0.25, 0.95)) {
+                    let stemTopY = p.random(60, p.height - 30);
+                    let stemBottomX = xBase + p.random(-8, 8);
+                    let stemTopX = xBase + p.random(-20, 20);
+                    let layer;
+                    if (stemTopY < p.height * 0.3) layer = "back";
+                    else if (stemTopY < p.height * 0.6) layer = "middle";
+                    else layer = "front";
+                    let sizeFactor;
+                    if (layer === "back") sizeFactor = p.random(0.5, 0.8);
+                    else if (layer === "middle") sizeFactor = p.random(0.8, 1.2);
+                    else sizeFactor = p.random(1.2, 1.8);
+                    let colorType = p.floor(p.random(4));
+                    let flowerR, flowerG, flowerB;
+                    if (colorType === 0) { flowerR = p.random(220,255); flowerG = p.random(120,180); flowerB = p.random(160,220); }
+                    else if (colorType === 1) { flowerR = p.random(230,255); flowerG = p.random(180,230); flowerB = p.random(80,140); }
+                    else if (colorType === 2) { flowerR = p.random(180,230); flowerG = p.random(140,190); flowerB = p.random(200,255); }
+                    else { flowerR = p.random(230,255); flowerG = p.random(210,245); flowerB = p.random(220,255); }
+                    let x_adjust = p.random(5,10) * sizeFactor;
+                    let y_adjust = p.random(3,7) * sizeFactor;
+                    let x_adjust_low = p.random(3,7) * sizeFactor;
+                    let y_adjust_long = p.random(6,12) * sizeFactor;
+                    let alphaValue;
+                    if (layer === "back") alphaValue = p.random(70,110);
+                    else if (layer === "middle") alphaValue = p.random(110,160);
+                    else alphaValue = p.random(150,210);
+                    flowers.push({
+                        baseX: stemBottomX, flowerX: stemTopX, targetY: stemTopY,
+                        x_adjust, y_adjust, x_adjust_low, y_adjust_long,
+                        R: flowerR, G: flowerG, B: flowerB, alphaValue,
+                        layer, sizeFactor,
+                        phase: p.random(p.TWO_PI),
+                        swaySpeed: p.random(0.01, 0.1),
+                        swayAmount: p.map(stemTopY, 0, p.height, 4, 24),
+                        growth: p.random(0.2, 0.9),
+                        growthSpeed: p.random(0.002, 0.008)
+                    });
                 }
             }
         }
+    }
 
-        function drawBackgroundLines() {
-            for (let x = 0; x < p.width; x += 2) {
-                p.strokeWeight(p.random(0.1, 0.3));
-                p.stroke(180 + p.random(50), 180 + p.random(50), 180 + p.random(50), 18);
-                p.line(x, p.height, x + p.random(-40, 40), 0);
-            }
+    // Wayne Lin-style: sparkle white points scattered across the canvas
+    function drawSparklePoints() {
+        p.stroke(252, 252, 252, 180);
+        p.strokeWeight(1);
+        let xstep = 5;
+        let border = 5;
+        for (let x = border; x <= p.width - border; x += xstep) {
+            p.point(p.random(x - border, x + border), p.random(p.height));
         }
+        p.noStroke();
+    }
 
-        function drawFlowerLayer(targetLayer) {
-            for (let f of flowers) {
-                if (f.layer !== targetLayer) continue;
-                if (f.growth < 1) f.growth += f.growthSpeed;
-                let currentY = p.lerp(p.height, f.targetY, p.constrain(f.growth, 0, 1));
-                let wind = p.sin(p.frameCount * f.swaySpeed + f.phase) * f.swayAmount;
-                let d = p.dist(p.mouseX, p.mouseY, f.flowerX, currentY);
-                let mouseInfluence = d < 100 ? p.map(d, 0, 100, 20, 0) : 0;
-                let fx = f.flowerX + wind + p.sin(p.frameCount * 0.15 + f.phase) * mouseInfluence;
-                if (f.layer === "back") { p.stroke(210); p.strokeWeight(0.4); }
-                else if (f.layer === "middle") { p.stroke(210); p.strokeWeight(0.7); }
-                else { p.stroke(210); p.strokeWeight(1); }
-                p.line(f.baseX, p.height, fx, currentY);
-                let extraAlpha = d < 100 ? p.map(d, 0, 100, 80, 0) : 0;
-                p.noStroke();
-                p.fill(f.R, f.G, f.B, f.alphaValue + extraAlpha);
-                p.triangle(fx, currentY, fx + f.x_adjust, currentY - f.y_adjust, fx + f.x_adjust, currentY + f.y_adjust);
-                p.triangle(fx, currentY, fx - f.x_adjust, currentY - f.y_adjust, fx - f.x_adjust, currentY + f.y_adjust);
-                p.triangle(fx, currentY, fx + f.x_adjust_low, currentY + f.y_adjust_long, fx - f.x_adjust_low, currentY + f.y_adjust_long);
-                p.triangle(fx, currentY, fx + f.x_adjust_low, currentY - f.y_adjust_long, fx - f.x_adjust_low, currentY - f.y_adjust_long);
-                if (f.layer === "front") { p.fill(255,240,180,180+extraAlpha*0.5); p.circle(fx, currentY, 2.5*f.sizeFactor); }
-                else if (f.layer === "middle") { p.fill(255,245,200,120+extraAlpha*0.3); p.circle(fx, currentY, 1.8*f.sizeFactor); }
-            }
+    // Wayne Lin-style: soft pastel light blobs (his "drawSun")
+    function drawLightBlobs() {
+        p.noStroke();
+        for (let i = 0; i < 3; i++) {
+            let xPos = p.random(p.width);
+            let yPos = p.random(p.height * 0.6);
+            p.fill(240, 186, p.random(234), 55);
+            p.ellipse(xPos, yPos, p.random(20), p.random(30));
         }
+    }
 
-        p.draw = function() {
-            p.background(250);
-            drawBackgroundLines();
-            drawFlowerLayer("back");
-            drawFlowerLayer("middle");
-            drawFlowerLayer("front");
-        };
+    // Wayne Lin-style green grass lines — replaces the old grey background lines
+    function drawBackgroundLines() {
+        let xstep = 2;
+        let border = 5;
+        for (let x = border; x <= p.width - border; x += xstep) {
+            // Green grass: random(50) gives dark greens, random(198) mids, random(100) for B keeps it green
+            let r = p.random(30, 80);
+            let g = p.random(120, 198);
+            let b = p.random(40, 110);
+            let a = p.random(20, 80);
+            p.stroke(r, g, b, a);
+            p.strokeWeight(p.random(0.3, 0.8));
+            // Wayne Lin's grass: slight random lean to each blade
+            let x1 = x + p.random(-40, 40);
+            p.line(x, p.height, x1, 0);
+        }
+    }
 
-        p.windowResized = function() {
-            p.resizeCanvas(p.windowWidth, p.windowHeight);
-            buildFlowers();
-        };
-    });
+    function drawFlowerLayer(targetLayer) {
+        for (let f of flowers) {
+            if (f.layer !== targetLayer) continue;
+            if (f.growth < 1) f.growth += f.growthSpeed;
+            let currentY = p.lerp(p.height, f.targetY, p.constrain(f.growth, 0, 1));
+            let wind = p.sin(p.frameCount * f.swaySpeed + f.phase) * f.swayAmount;
+            let d = p.dist(p.mouseX, p.mouseY, f.flowerX, currentY);
+            let mouseInfluence = d < 100 ? p.map(d, 0, 100, 20, 0) : 0;
+            let fx = f.flowerX + wind + p.sin(p.frameCount * 0.15 + f.phase) * mouseInfluence;
+
+            // Green-tinted stems: darker greens for back, brighter for front
+            if (f.layer === "back") {
+                p.stroke(p.random(40,80), p.random(130,170), p.random(50,90), 60);
+                p.strokeWeight(0.4);
+            } else if (f.layer === "middle") {
+                p.stroke(p.random(50,100), p.random(150,190), p.random(60,100), 90);
+                p.strokeWeight(0.7);
+            } else {
+                p.stroke(p.random(60,120), p.random(160,210), p.random(70,120), 120);
+                p.strokeWeight(1);
+            }
+            p.line(f.baseX, p.height, fx, currentY);
+
+            let extraAlpha = d < 100 ? p.map(d, 0, 100, 80, 0) : 0;
+            p.noStroke();
+            p.fill(f.R, f.G, f.B, f.alphaValue + extraAlpha);
+            p.triangle(fx, currentY, fx + f.x_adjust, currentY - f.y_adjust, fx + f.x_adjust, currentY + f.y_adjust);
+            p.triangle(fx, currentY, fx - f.x_adjust, currentY - f.y_adjust, fx - f.x_adjust, currentY + f.y_adjust);
+            p.triangle(fx, currentY, fx + f.x_adjust_low, currentY + f.y_adjust_long, fx - f.x_adjust_low, currentY + f.y_adjust_long);
+            p.triangle(fx, currentY, fx + f.x_adjust_low, currentY - f.y_adjust_long, fx - f.x_adjust_low, currentY - f.y_adjust_long);
+            if (f.layer === "front") { p.fill(255,240,180,180+extraAlpha*0.5); p.circle(fx, currentY, 2.5*f.sizeFactor); }
+            else if (f.layer === "middle") { p.fill(255,245,200,120+extraAlpha*0.3); p.circle(fx, currentY, 1.8*f.sizeFactor); }
+        }
+    }
+
+    p.draw = function() {
+        // Wayne Lin's background: light green-white base instead of pure white
+        p.background(224, 238, 220);
+        drawBackgroundLines();
+        drawLightBlobs();
+        drawSparklePoints();
+        drawFlowerLayer("back");
+        drawFlowerLayer("middle");
+        drawFlowerLayer("front");
+    };
+
+    p.windowResized = function() {
+        p.resizeCanvas(p.windowWidth, p.windowHeight);
+        buildFlowers();
+    };
+});
     </script>
 
     <!-- Three.js + GLTFLoader + OrbitControls (all from CDN) -->
